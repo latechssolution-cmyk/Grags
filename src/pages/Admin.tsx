@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, type ElementType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen, LogOut, Eye, EyeOff, Lock, LayoutDashboard, TrendingUp, BarChart2, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
@@ -25,11 +25,27 @@ const PIE_COLORS: Record<string, string> = {
   Cancelled: "#ef4444",
 };
 
-const StatCard = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
-  <div className="border border-border bg-card p-5 space-y-1">
-    <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans">{label}</p>
-    <p className="text-2xl font-serif font-bold text-foreground">{value}</p>
-    {sub && <p className="text-[10px] text-muted-foreground font-sans">{sub}</p>}
+const StatCard = ({
+  label,
+  value,
+  sub,
+  icon: Icon,
+  accentColor,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  icon?: ElementType;
+  accentColor?: string;
+}) => (
+  <div className="relative border border-border bg-card p-6 overflow-hidden hover:border-foreground/20 transition-colors duration-300 group">
+    {accentColor && <div className="absolute top-0 inset-x-0 h-[2px]" style={{ background: accentColor }} />}
+    <div className="flex items-start justify-between mb-3">
+      <p className="text-[9px] tracking-ultra-wide uppercase text-muted-foreground font-sans leading-none">{label}</p>
+      {Icon && <Icon className="w-3.5 h-3.5 text-muted-foreground/25 flex-shrink-0" />}
+    </div>
+    <p className="text-3xl font-serif font-bold text-foreground leading-none">{value}</p>
+    {sub && <p className="text-[10px] text-muted-foreground/60 font-sans mt-2">{sub}</p>}
   </div>
 );
 
@@ -731,47 +747,73 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
 
         {/* ─── Dashboard ─── */}
         {tab === "dashboard" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-8">
-            <h2 className="text-2xl font-serif font-bold text-foreground">Dashboard</h2>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-7">
+
+            {/* Header */}
+            <div className="flex items-end justify-between pb-5 border-b border-border">
+              <div>
+                <h2 className="text-3xl font-serif font-bold text-foreground tracking-tight">Dashboard</h2>
+                <p className="text-[11px] text-muted-foreground/70 font-sans mt-1 tracking-wide">
+                  {new Date().toLocaleDateString("en-PK", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] tracking-ultra-wide uppercase text-muted-foreground font-sans">{stats.total} total orders</p>
+                <p className="text-sm font-serif font-bold text-foreground mt-0.5">PKR {stats.revenue.toLocaleString()}</p>
+              </div>
+            </div>
 
             {/* Row 1: Key metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Total Orders" value={stats.total} />
-              <StatCard label="Revenue" value={`PKR ${stats.revenue.toLocaleString()}`} sub="Excl. cancelled" />
-              <StatCard label="Avg Order Value" value={`PKR ${stats.aov.toLocaleString()}`} />
-              <StatCard label="Items Sold" value={stats.itemsSold} />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <StatCard label="Total Orders" value={stats.total} sub={`${stats.byStatus.Pending} pending`} icon={ShoppingCart} accentColor="#3b82f6" />
+              <StatCard label="Revenue" value={`PKR ${stats.revenue.toLocaleString()}`} sub="Excl. cancelled" icon={TrendingUp} accentColor="#10b981" />
+              <StatCard label="Avg Order Value" value={`PKR ${stats.aov.toLocaleString()}`} sub="Per fulfilled order" icon={BarChart2} accentColor="#8b5cf6" />
+              <StatCard label="Items Sold" value={stats.itemsSold} sub="Across all orders" icon={Package} accentColor="#f59e0b" />
             </div>
 
             {/* Row 2: Order status breakdown */}
-            <div>
-              <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans mb-3">Orders by Status</p>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                {ORDER_STATUSES.map((s) => (
-                  <div key={s} className="border border-border bg-card p-4">
-                    <p className="text-[10px] tracking-ultra-wide uppercase font-sans mb-1" style={{ color: PIE_COLORS[s] }}>{s}</p>
-                    <p className="text-2xl font-serif font-bold text-foreground">{stats.byStatus[s]}</p>
-                  </div>
-                ))}
+            <div className="border border-border bg-card p-5">
+              <p className="text-[9px] tracking-ultra-wide uppercase text-muted-foreground font-sans mb-4">Orders by Status</p>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {ORDER_STATUSES.map((s) => {
+                  const count = stats.byStatus[s];
+                  const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0;
+                  return (
+                    <div key={s} className="relative p-4 bg-background border border-border overflow-hidden">
+                      <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: PIE_COLORS[s] }} />
+                      <p className="text-[9px] tracking-ultra-wide uppercase font-sans pl-2 mb-2" style={{ color: PIE_COLORS[s] }}>{s}</p>
+                      <p className="text-2xl font-serif font-bold text-foreground pl-2">{count}</p>
+                      <div className="mt-3 h-[3px] bg-border rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: PIE_COLORS[s], transition: "width 0.7s ease" }} />
+                      </div>
+                      <p className="text-[9px] text-muted-foreground/60 font-sans mt-1.5">{pct}% of total</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             {/* Row 3: Inventory & coupons */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <StatCard label="Total Products" value={products.length} />
-              <StatCard label="Active Coupons" value={settings.couponCodes.filter((c) => c.active).length} />
-              <div className="border border-border bg-card p-5 space-y-1">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                  <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans">Low Stock</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <StatCard label="Total Products" value={products.length} sub="In catalogue" icon={Package} />
+              <StatCard label="Active Coupons" value={settings.couponCodes.filter((c) => c.active).length} sub={`of ${settings.couponCodes.length} total`} icon={Tag} />
+              <div className="relative border border-border bg-card p-6 overflow-hidden hover:border-foreground/20 transition-colors duration-300">
+                <div className="absolute top-0 inset-x-0 h-[2px] bg-amber-500" />
+                <div className="flex items-start justify-between mb-3">
+                  <p className="text-[9px] tracking-ultra-wide uppercase text-muted-foreground font-sans leading-none">Low Stock</p>
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500/50 flex-shrink-0" />
                 </div>
-                <p className="text-2xl font-serif font-bold text-foreground">
+                <p className="text-3xl font-serif font-bold text-foreground leading-none">
                   {products.filter((p) => p.stock > 0 && p.stock <= 5).length}
                 </p>
-                <p className="text-[10px] text-muted-foreground font-sans">≤ 5 units remaining</p>
+                <p className="text-[10px] text-muted-foreground/60 font-sans mt-2">≤ 5 units remaining</p>
                 {products.filter((p) => p.stock > 0 && p.stock <= 5).length > 0 && (
-                  <div className="pt-2 space-y-1">
+                  <div className="mt-4 pt-4 border-t border-border space-y-2">
                     {products.filter((p) => p.stock > 0 && p.stock <= 5).map((p) => (
-                      <p key={p.id} className="text-[10px] font-sans text-amber-400 truncate">{p.name} — {p.stock} left</p>
+                      <div key={p.id} className="flex items-center justify-between gap-2">
+                        <p className="text-[10px] font-sans text-foreground truncate">{p.name}</p>
+                        <span className="text-[9px] font-sans text-amber-500 font-medium shrink-0">{p.stock} left</span>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -779,46 +821,56 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
             </div>
 
             {/* Row 4: Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="border border-border bg-card p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <BarChart2 className="w-3.5 h-3.5 text-muted-foreground" />
-                  <h3 className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans">Top Products by Units Sold</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="border border-border bg-card overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                  <div>
+                    <p className="text-[9px] tracking-ultra-wide uppercase text-muted-foreground font-sans">Top Products</p>
+                    <p className="text-xs font-sans text-foreground font-medium mt-0.5">Units sold per product</p>
+                  </div>
+                  <BarChart2 className="w-4 h-4 text-muted-foreground/25" />
                 </div>
-                {stats.productChart.length === 0 ? (
-                  <p className="text-sm text-muted-foreground font-sans text-center py-16">No order data yet.</p>
-                ) : (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <BarChart data={stats.productChart} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }} interval={0} />
-                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} allowDecimals={false} />
-                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
-                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
+                <div className="p-5">
+                  {stats.productChart.length === 0 ? (
+                    <p className="text-sm text-muted-foreground font-sans text-center py-16">No order data yet.</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={stats.productChart} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }} interval={0} />
+                        <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} allowDecimals={false} />
+                        <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12, borderRadius: 0 }} cursor={{ fill: "hsl(var(--border))" }} />
+                        <Bar dataKey="count" fill="hsl(var(--foreground))" radius={[2, 2, 0, 0]} opacity={0.85} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
               </div>
 
-              <div className="border border-border bg-card p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
-                  <h3 className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans">Order Status Distribution</h3>
+              <div className="border border-border bg-card overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                  <div>
+                    <p className="text-[9px] tracking-ultra-wide uppercase text-muted-foreground font-sans">Status Distribution</p>
+                    <p className="text-xs font-sans text-foreground font-medium mt-0.5">Order fulfilment breakdown</p>
+                  </div>
+                  <TrendingUp className="w-4 h-4 text-muted-foreground/25" />
                 </div>
-                {stats.total === 0 ? (
-                  <p className="text-sm text-muted-foreground font-sans text-center py-16">No order data yet.</p>
-                ) : (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <PieChart>
-                      <Pie data={stats.statusChart} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => percent > 0 ? `${name} ${(percent * 100).toFixed(0)}%` : ""} labelLine={false}>
-                        {stats.statusChart.map((entry) => (
-                          <Cell key={entry.name} fill={PIE_COLORS[entry.name] || "#888"} />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
+                <div className="p-5">
+                  {stats.total === 0 ? (
+                    <p className="text-sm text-muted-foreground font-sans text-center py-16">No order data yet.</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie data={stats.statusChart} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} innerRadius={42} labelLine={false}>
+                          {stats.statusChart.map((entry) => (
+                            <Cell key={entry.name} fill={PIE_COLORS[entry.name] || "#888"} strokeWidth={0} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12, borderRadius: 0 }} />
+                        <Legend wrapperStyle={{ fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase" }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>
