@@ -82,12 +82,17 @@ const AboutModal = ({ onClose }) => {
     setStatus("sending");
 
     try {
-      // Using mailto as a fallback since no backend is specified
-      const subject = encodeURIComponent(`FAQ from ${name}`);
-      const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
-      window.open(`mailto:contact@grags.com?subject=${subject}&body=${body}`);
-      setStatus("sent");
-      setName(""); setEmail(""); setMessage("");
+      const res = await fetch("https://formspree.io/f/mjgqwpbq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ name, email, message, _subject: `FAQ from ${name} — GRAGGS` }),
+      });
+      if (res.ok) {
+        setStatus("sent");
+        setName(""); setEmail(""); setMessage("");
+      } else {
+        setStatus("error");
+      }
     } catch {
       setStatus("error");
     }
@@ -276,7 +281,7 @@ const AboutModal = ({ onClose }) => {
                   <div className="w-8 h-8 rounded-full border border-foreground/20 flex items-center justify-center mx-auto mb-4">
                     <Send className="w-3.5 h-3.5 text-foreground/60" />
                   </div>
-                  <p className="text-sm font-sans text-foreground/70">Message opened in your mail client.</p>
+                  <p className="text-sm font-sans text-foreground/70">Message sent successfully.</p>
                   <p className="text-xs font-sans text-foreground/40 mt-1">We'll get back to you shortly.</p>
                   <button
                     onClick={() => setStatus("idle")}
