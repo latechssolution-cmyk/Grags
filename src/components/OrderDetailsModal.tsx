@@ -1,3 +1,4 @@
+import { type ReactNode, type ElementType } from "react";
 import { X, Package, MapPin, CreditCard, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Order } from "@/store/orderStore";
@@ -15,7 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
   Cancelled: "bg-red-500/20 text-red-400",
 };
 
-function Section({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
+function Section({ title, icon: Icon, children }: { title: string; icon: ElementType; children: ReactNode }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-white/50">

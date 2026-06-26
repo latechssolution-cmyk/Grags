@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ChevronLeft, Mail, Phone, MapPin } from "lucide-react";
 import { useSettings } from "@/store/settingsStore";
 
-function PageLayout({ title, children }: { title: string; children: React.ReactNode }) {
+function PageLayout({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#050505] text-white pt-20 pb-20">
       <div className="max-w-2xl mx-auto px-6">

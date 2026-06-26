@@ -65,13 +65,19 @@ export function useSettings() {
     const handler = () => setSettings(load());
     listeners.add(handler);
 
-    // Fetch from MongoDB
+    // Fetch from MongoDB — merge with defaults so new fields aren't lost
+    // when an existing MongoDB document predates their addition.
     fetch("/.netlify/functions/settings")
       .then((res) => res.json())
       .then((data) => {
         if (data && typeof data === "object" && !data.error) {
-          saveSettings(data);
-          setSettings(data);
+          const merged: SiteSettings = {
+            ...defaultSettings,
+            ...data,
+            collections: data.collections ?? defaultSettings.collections,
+          };
+          saveSettings(merged);
+          setSettings(merged);
         }
       })
       .catch((err) => console.error("Error fetching settings from MongoDB:", err));
