@@ -11,7 +11,7 @@ export interface CartItem {
   quantity: number;
 }
 
-const STORAGE_KEY = "grags_cart";
+const STORAGE_KEY = "graggs_cart";
 
 function load(): CartItem[] {
   try {

@@ -19,61 +19,9 @@ const navLinks = [
   { label: "About Us", href: null, modal: "about" },
 ];
 
-// ─── Journals Modal ───────────────────────────────────────────────────────────
-const JournalsModal = ({ onClose }) => (
-  <motion.div
-    className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-  >
-    {/* Backdrop */}
-    <motion.div
-      className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    />
-
-    {/* Panel */}
-    <motion.div
-      className="relative z-10 w-full max-w-md bg-background border border-border rounded-sm p-10 text-center"
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 24 }}
-      transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.45 }}
-    >
-      <button
-        onClick={onClose}
-        className="absolute top-5 right-5 text-foreground/50 hover:text-foreground transition-colors"
-        aria-label="Close"
-      >
-        <X className="w-4 h-4" />
-      </button>
-
-      {/* Decorative line */}
-      <div className="flex items-center justify-center gap-3 mb-8">
-        <div className="h-px w-10 bg-foreground/20" />
-        <span className="text-[10px] tracking-[0.25em] uppercase text-foreground/40 font-sans">Grags</span>
-        <div className="h-px w-10 bg-foreground/20" />
-      </div>
-
-      <h2 className="text-2xl font-serif tracking-wide text-foreground mb-3">Journals</h2>
-      <p className="text-xs tracking-[0.15em] uppercase text-foreground/40 font-sans mb-8">
-        Something is being written
-      </p>
-
-      <div className="w-10 h-px bg-foreground/20 mx-auto mb-8" />
-
-      <p className="text-sm font-sans text-foreground/60 leading-relaxed">
-        Our journal is on its way — stories of craft, culture, and the people behind Grags.
-        <br /><br />
-        <span className="text-foreground/40 text-xs tracking-widest uppercase">Coming Soon</span>
-      </p>
-    </motion.div>
-  </motion.div>
-);
-
 // ─── About Us Modal ───────────────────────────────────────────────────────────
 const AboutModal = ({ onClose }) => {
+  const { settings } = useSettings();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -189,19 +137,19 @@ const AboutModal = ({ onClose }) => {
                 <p className="text-[10px] tracking-[0.2em] uppercase text-foreground/40 font-sans mb-4">Get in Touch</p>
 
                 <a
-                  href="mailto:contact@grags.com"
+                  href={`mailto:${settings.contactEmail}`}
                   className="flex items-center gap-3 text-sm font-sans text-foreground/70 hover:text-foreground transition-colors group"
                 >
                   <Mail className="w-3.5 h-3.5 text-foreground/40 group-hover:text-foreground transition-colors" />
-                  contact@grags.com
+                  {settings.contactEmail}
                 </a>
 
                 <a
-                  href="tel:+923166734811"
+                  href={`https://wa.me/${settings.whatsappNumber?.replace(/\D/g, "")}`}
                   className="flex items-center gap-3 text-sm font-sans text-foreground/70 hover:text-foreground transition-colors group"
                 >
                   <Phone className="w-3.5 h-3.5 text-foreground/40 group-hover:text-foreground transition-colors" />
-                  0316 673 4811
+                  {settings.whatsappNumber}
                 </a>
               </div>
             </motion.div>
@@ -241,7 +189,7 @@ const AboutModal = ({ onClose }) => {
                 },
                 {
                   title: "Contact",
-                  body: "For any queries regarding these terms, reach us at contact@grags.com or call 0316 673 4811."
+                  body: `For any queries regarding these terms, reach us at ${settings.contactEmail} or call ${settings.whatsappNumber}.`
                 },
               ].map((item, i) => (
                 <div key={i} className={`pb-5 mb-5 ${i < 5 ? "border-b border-border" : ""}`}>
@@ -270,8 +218,8 @@ const AboutModal = ({ onClose }) => {
 
               <p className="text-sm font-sans text-foreground/60 leading-relaxed mb-8">
                 Have a question about sizing, orders, or anything else? Write to us below and we'll respond at{" "}
-                <a href="mailto:contact@grags.com" className="text-foreground underline underline-offset-2">
-                  contact@grags.com
+                <a href={`mailto:${settings.contactEmail}`} className="text-foreground underline underline-offset-2">
+                  {settings.contactEmail}
                 </a>{" "}
                 within 24 hours.
               </p>
@@ -347,7 +295,7 @@ const AboutModal = ({ onClose }) => {
                   </button>
 
                   <p className="text-[10px] text-foreground/30 font-sans text-center">
-                    Sent to contact@grags.com
+                    Sent to {settings.contactEmail}
                   </p>
                 </form>
               )}
@@ -560,9 +508,6 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
 
       {/* Modals */}
       <AnimatePresence>
-        {activeModal === "journals" && (
-          <JournalsModal onClose={() => setActiveModal(null)} />
-        )}
         {activeModal === "about" && (
           <AboutModal onClose={() => setActiveModal(null)} />
         )}

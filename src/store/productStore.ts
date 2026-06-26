@@ -305,10 +305,8 @@ export function useProducts() {
 
   const getById = useCallback((id: string) => products.find((p) => p.id === id || p.sku === id), [products]);
 
-  const getVariantStock = useCallback((product: Product, color?: string): number => {
-    if (!color) return product.stock;
-    const variant = product.colorVariants.find((v) => v.name === color);
-    return variant ? product.stock : product.stock;
+  const getVariantStock = useCallback((product: Product): number => {
+    return product.stock;
   }, []);
 
   const addReview = useCallback((productId: string, review: ProductReview) => {

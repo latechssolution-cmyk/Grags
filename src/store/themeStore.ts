@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 
 export type Theme = "light" | "dark";
-const STORAGE_KEY = "grags_theme";
+const STORAGE_KEY = "graggs_theme";
 
 function getInitial(): Theme {
   if (typeof window === "undefined") return "dark";

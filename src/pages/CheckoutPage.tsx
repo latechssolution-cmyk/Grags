@@ -53,7 +53,6 @@ export default function CheckoutPage() {
   const { items, subtotal, clear } = useCart();
   const { addOrder } = useOrders();
   const { settings, applyCoupon } = useSettings();
-  const navigate = useNavigate();
 
   const [form, setForm] = useState<FormData>({
     customerName: "", email: "", phone: "", house: "", street: "", city: "", postalCode: "", country: "Pakistan",
