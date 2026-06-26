@@ -1,17 +1,16 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen } from "lucide-react";
 import { useProducts, Product, ColorVariant, generateProductCode } from "@/store/productStore";
 import { useHero, useFabric } from "@/store/heroStore";
 import { useOrders, OrderStatus } from "@/store/orderStore";
-import { useSettings, CouponCode } from "@/store/settingsStore";
+import { useSettings, CouponCode, Collection } from "@/store/settingsStore";
 
 const EMAILJS_SERVICE_ID  = "service_lzhp8t6";
 const EMAILJS_TEMPLATE_ID = "template_mq2zq75";
 const EMAILJS_PUBLIC_KEY  = "bNSf_ytdwdT2A38I8";
 
 const ALL_TAGS = ["NEW IN", "TOPS", "BOTTOMS", "ESSENTIALS", "HERITAGE"];
-const ALL_COLLECTIONS = ["MENS POLO", "SIGNATURE COLLECTION", "WINTER COLLECTION"];
 const ORDER_STATUSES: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"];
 
 // ─── Inject EmailJS SDK once ──────────────────────────────
@@ -125,10 +124,12 @@ const ProductForm = ({
   initial,
   onSave,
   onCancel,
+  availableCollections,
 }: {
   initial?: Product;
   onSave: (p: Product) => void;
   onCancel: () => void;
+  availableCollections: string[];
 }) => {
   const [form, setForm] = useState<Product>(
     initial ?? {
@@ -199,7 +200,7 @@ const ProductForm = ({
       <div>
         <label className={labelCls}>Collections</label>
         <div className="flex flex-wrap gap-2 mt-1">
-          {ALL_COLLECTIONS.map((col) => (
+          {availableCollections.map((col) => (
             <button key={col} onClick={() => toggleCollection(col)} className={`px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans border transition-colors duration-200 ${form.collections.includes(col) ? "bg-foreground text-background border-foreground" : "bg-transparent text-muted-foreground border-border hover:border-foreground"}`}>{col}</button>
           ))}
         </div>
@@ -395,11 +396,14 @@ const Admin = () => {
   const { hero, updateHero, defaultImage } = useHero();
   const { fabric, updateFabric, defaultImage: fabricDefaultImage } = useFabric();
   const { orders, updateStatus } = useOrders();
-  const { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon } = useSettings();
+  const { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, addCollection, updateCollection, deleteCollection } = useSettings();
 
-  const [tab, setTab] = useState<"products" | "hero" | "fabric" | "orders" | "coupons" | "settings">("products");
+  const [tab, setTab] = useState<"products" | "hero" | "fabric" | "orders" | "coupons" | "collections" | "settings">("products");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [addingProduct, setAddingProduct] = useState(false);
+  const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
+  const [addingCollection, setAddingCollection] = useState(false);
+  const [collectionForm, setCollectionForm] = useState<Collection>({ id: "", name: "", title: "", subtitle: "", slug: "", imageUrl: "" });
   const [orderSearch, setOrderSearch] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>("ALL");
   const [orderDateFilter, setOrderDateFilter] = useState("");
@@ -472,14 +476,43 @@ const Admin = () => {
   const inputCls = "w-full bg-secondary text-foreground border border-border px-3 py-2 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-ring";
   const labelCls = "text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans block mb-1";
 
+  const availableCollections = (settings.collections ?? []).map((c) => c.name);
+
   const tabs = [
     { id: "products" as const, label: "Products", icon: Package },
     { id: "hero" as const, label: "Hero", icon: Film },
     { id: "fabric" as const, label: "Fabric", icon: Image },
     { id: "orders" as const, label: "Orders", icon: ShoppingCart },
     { id: "coupons" as const, label: "Coupons", icon: Tag },
+    { id: "collections" as const, label: "Collections", icon: FolderOpen },
     { id: "settings" as const, label: "Settings", icon: Settings },
   ];
+
+  const slugify = (text: string) =>
+    text.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]+/g, "").replace(/--+/g, "-");
+
+  const openAddCollection = () => {
+    setCollectionForm({ id: crypto.randomUUID(), name: "", title: "", subtitle: "", slug: "", imageUrl: "" });
+    setEditingCollection(null);
+    setAddingCollection(true);
+  };
+
+  const openEditCollection = (col: Collection) => {
+    setCollectionForm({ ...col });
+    setEditingCollection(col);
+    setAddingCollection(false);
+  };
+
+  const saveCollectionForm = () => {
+    if (!collectionForm.name.trim() || !collectionForm.slug.trim()) return;
+    if (editingCollection) {
+      updateCollection(editingCollection.id, collectionForm);
+      setEditingCollection(null);
+    } else {
+      addCollection(collectionForm);
+      setAddingCollection(false);
+    }
+  };
 
   const statusColors: Record<OrderStatus, string> = {
     Pending:   "text-yellow-500",
@@ -548,8 +581,8 @@ const Admin = () => {
                 </div>
               </>
             )}
-            {addingProduct && <div><h2 className="text-2xl font-serif font-bold text-foreground mb-6">Add Product</h2><ProductForm onSave={(p) => { addProduct(p); setAddingProduct(false); }} onCancel={() => setAddingProduct(false)} /></div>}
-            {editingProduct && <div><h2 className="text-2xl font-serif font-bold text-foreground mb-6">Edit Product</h2><ProductForm initial={editingProduct} onSave={(p) => { updateProduct(p.id, p); setEditingProduct(null); }} onCancel={() => setEditingProduct(null)} /></div>}
+            {addingProduct && <div><h2 className="text-2xl font-serif font-bold text-foreground mb-6">Add Product</h2><ProductForm availableCollections={availableCollections} onSave={(p) => { addProduct(p); setAddingProduct(false); }} onCancel={() => setAddingProduct(false)} /></div>}
+            {editingProduct && <div><h2 className="text-2xl font-serif font-bold text-foreground mb-6">Edit Product</h2><ProductForm availableCollections={availableCollections} initial={editingProduct} onSave={(p) => { updateProduct(p.id, p); setEditingProduct(null); }} onCancel={() => setEditingProduct(null)} /></div>}
           </motion.div>
         )}
 
@@ -661,6 +694,119 @@ const Admin = () => {
                 </tbody>
               </table>
             </div>
+          </motion.div>
+        )}
+
+        {/* ─── Collections ─── */}
+        {tab === "collections" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+            {!addingCollection && !editingCollection && (
+              <>
+                <div className="flex justify-between items-center mb-8">
+                  <div>
+                    <h2 className="text-2xl font-serif font-bold text-foreground">Collections</h2>
+                    <p className="text-xs text-muted-foreground font-sans mt-1">Collections group products and create browsable pages at /collections/slug</p>
+                  </div>
+                  <button onClick={openAddCollection} className="flex items-center gap-2 px-5 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity">
+                    <Plus className="w-3 h-3" /> Add Collection
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {(settings.collections ?? []).map((col) => (
+                    <div key={col.id} className="flex items-center gap-4 p-4 border border-border bg-card">
+                      <div className="w-10 h-10 flex-shrink-0 bg-secondary border border-border overflow-hidden">
+                        {col.imageUrl ? <img src={col.imageUrl} alt={col.title} className="w-full h-full object-cover" /> : <div className="w-full h-full" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-sans font-medium text-foreground">{col.title}</h3>
+                        <p className="text-xs text-muted-foreground font-sans">{col.subtitle} · <span className="font-mono">/collections/{col.slug}</span></p>
+                        <p className="text-[10px] text-muted-foreground font-sans mt-0.5">Product tag: <span className="text-foreground font-medium">{col.name}</span></p>
+                      </div>
+                      <button onClick={() => openEditCollection(col)} className="p-2 text-muted-foreground hover:text-foreground transition-colors"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => deleteCollection(col.id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  ))}
+                  {(settings.collections ?? []).length === 0 && (
+                    <p className="text-center text-muted-foreground font-sans text-sm py-10">No collections yet. Add one above.</p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {(addingCollection || editingCollection) && (
+              <div>
+                <h2 className="text-2xl font-serif font-bold text-foreground mb-6">
+                  {editingCollection ? "Edit Collection" : "Add Collection"}
+                </h2>
+                <div className="space-y-4 max-w-lg">
+                  <div>
+                    <label className={labelCls}>Collection Name <span className="text-muted-foreground normal-case">(used to tag products)</span></label>
+                    <input
+                      value={collectionForm.name}
+                      onChange={(e) => setCollectionForm((f) => ({
+                        ...f,
+                        name: e.target.value.toUpperCase(),
+                        slug: f.slug || slugify(e.target.value),
+                      }))}
+                      placeholder="e.g. SUMMER COLLECTION"
+                      className={inputCls}
+                    />
+                    <p className="text-[10px] text-muted-foreground font-sans mt-1">This is the exact value assigned to products. Keep it uppercase and consistent.</p>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Display Title</label>
+                    <input
+                      value={collectionForm.title}
+                      onChange={(e) => setCollectionForm((f) => ({ ...f, title: e.target.value }))}
+                      placeholder="e.g. Summer Collection"
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Subtitle</label>
+                    <input
+                      value={collectionForm.subtitle}
+                      onChange={(e) => setCollectionForm((f) => ({ ...f, subtitle: e.target.value }))}
+                      placeholder="e.g. New Arrivals"
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>URL Slug</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-sans text-muted-foreground whitespace-nowrap">/collections/</span>
+                      <input
+                        value={collectionForm.slug}
+                        onChange={(e) => setCollectionForm((f) => ({ ...f, slug: slugify(e.target.value) }))}
+                        placeholder="e.g. summer-collection"
+                        className={`flex-1 ${inputCls}`}
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-sans mt-1">Auto-filled from name. Only lowercase letters, numbers and hyphens.</p>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Cover Image URL <span className="text-muted-foreground normal-case">(optional)</span></label>
+                    <input
+                      value={collectionForm.imageUrl ?? ""}
+                      onChange={(e) => setCollectionForm((f) => ({ ...f, imageUrl: e.target.value }))}
+                      placeholder="https://..."
+                      className={inputCls}
+                    />
+                    {collectionForm.imageUrl && (
+                      <img src={collectionForm.imageUrl} alt="Preview" className="mt-2 w-24 h-28 object-cover border border-border" onError={(e) => (e.currentTarget.style.display = "none")} />
+                    )}
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button onClick={saveCollectionForm} className="flex items-center gap-2 px-6 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity">
+                      <Save className="w-3 h-3" /> Save
+                    </button>
+                    <button onClick={() => { setAddingCollection(false); setEditingCollection(null); }} className="px-6 py-2 border border-border text-foreground text-xs tracking-ultra-wide uppercase font-sans hover:bg-secondary transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 

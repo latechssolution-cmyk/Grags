@@ -29,9 +29,7 @@ const App = () => (
           <Route path="/bottoms" element={<Bottoms />} />
           <Route path="/essentials" element={<Essentials />} />
           <Route path="/heritage" element={<Heritage />} />
-          <Route path="/collections/mens-polo" element={<CollectionPage collection="MENS POLO" title="Men's Polos" subtitle="Classic Collection" />} />
-          <Route path="/collections/signature-collection" element={<CollectionPage collection="SIGNATURE COLLECTION" title="Signature Collection" subtitle="Exclusive Designs" />} />
-          <Route path="/collections/winter-collection" element={<CollectionPage collection="WINTER COLLECTION" title="Winter Collection" subtitle="Cold Weather Essentials" />} />
+          <Route path="/collections/:slug" element={<CollectionPage />} />
           <Route path="/product/:code" element={<ProductDetail />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />

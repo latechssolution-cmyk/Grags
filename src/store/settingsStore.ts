@@ -8,9 +8,19 @@ export interface CouponCode {
   active: boolean;
 }
 
+export interface Collection {
+  id: string;
+  name: string;      // value stored on products, e.g. "MENS POLO"
+  title: string;     // display heading, e.g. "Men's Polos"
+  subtitle: string;  // display subheading, e.g. "Classic Collection"
+  slug: string;      // URL segment, e.g. "mens-polo"
+  imageUrl?: string; // optional cover image URL
+}
+
 export interface SiteSettings {
   whatsappNumber: string;
   couponCodes: CouponCode[];
+  collections: Collection[];
 }
 
 const defaultSettings: SiteSettings = {
@@ -19,6 +29,11 @@ const defaultSettings: SiteSettings = {
     { id: "1", code: "GRAGGS10", discount: 10, type: "percentage", active: true },
     { id: "2", code: "WELCOME500", discount: 500, type: "fixed", active: true },
   ],
+  collections: [
+    { id: "1", name: "MENS POLO", title: "Men's Polos", subtitle: "Classic Collection", slug: "mens-polo" },
+    { id: "2", name: "SIGNATURE COLLECTION", title: "Signature Collection", subtitle: "Exclusive Designs", slug: "signature-collection" },
+    { id: "3", name: "WINTER COLLECTION", title: "Winter Collection", subtitle: "Cold Weather Essentials", slug: "winter-collection" },
+  ],
 };
 
 const STORAGE_KEY = "graggs_settings";
@@ -26,7 +41,10 @@ const STORAGE_KEY = "graggs_settings";
 function load(): SiteSettings {
   try {
     const s = localStorage.getItem(STORAGE_KEY);
-    if (s) return JSON.parse(s);
+    if (s) {
+      const parsed = JSON.parse(s);
+      return { ...defaultSettings, ...parsed, collections: parsed.collections ?? defaultSettings.collections };
+    }
   } catch {}
   return defaultSettings;
 }
@@ -107,5 +125,23 @@ export function useSettings() {
     return { valid: true, discount, message: `${coupon.type === "percentage" ? `${coupon.discount}%` : `PKR ${coupon.discount}`} discount applied!` };
   }, []);
 
-  return { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, applyCoupon };
+  const addCollection = useCallback((col: Collection) => {
+    const current = load();
+    const next = { ...current, collections: [...(current.collections ?? []), col] };
+    saveAndSync(next);
+  }, [saveAndSync]);
+
+  const updateCollection = useCallback((id: string, data: Partial<Collection>) => {
+    const current = load();
+    const next = { ...current, collections: (current.collections ?? []).map(c => c.id === id ? { ...c, ...data } : c) };
+    saveAndSync(next);
+  }, [saveAndSync]);
+
+  const deleteCollection = useCallback((id: string) => {
+    const current = load();
+    const next = { ...current, collections: (current.collections ?? []).filter(c => c.id !== id) };
+    saveAndSync(next);
+  }, [saveAndSync]);
+
+  return { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, applyCoupon, addCollection, updateCollection, deleteCollection };
 }

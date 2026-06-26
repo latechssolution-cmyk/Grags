@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
@@ -6,24 +7,37 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import BookingModal from "@/components/BookingModal";
 import { useProducts, Product } from "@/store/productStore";
+import { useSettings } from "@/store/settingsStore";
 import { ProductCard } from "@/components/ProductCard";
 
-interface CollectionPageProps {
-  collection: string;
-  title: string;
-  subtitle: string;
-}
-
-const CollectionPage = ({ collection, title, subtitle }: CollectionPageProps) => {
+const CollectionPage = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const { settings } = useSettings();
   const { getByCollection } = useProducts();
-  const filtered = getByCollection(collection);
   const [bookingProduct, setBookingProduct] = useState<Product | null>(null);
   const [bookingVariantIdx, setBookingVariantIdx] = useState(0);
+
+  const collection = (settings.collections ?? []).find((c) => c.slug === slug);
 
   const handleBook = (p: Product, variantIdx: number) => {
     setBookingProduct(p);
     setBookingVariantIdx(variantIdx);
   };
+
+  if (!collection) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground font-sans mb-4">Collection not found.</p>
+          <Link to="/" className="text-xs tracking-ultra-wide uppercase font-sans text-foreground underline">
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const filtered = getByCollection(collection.name);
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,8 +52,8 @@ const CollectionPage = ({ collection, title, subtitle }: CollectionPageProps) =>
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <p className="text-xs tracking-mega-wide uppercase text-muted-foreground font-sans mb-3">{subtitle}</p>
-            <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground">{title}</h2>
+            <p className="text-xs tracking-mega-wide uppercase text-muted-foreground font-sans mb-3">{collection.subtitle}</p>
+            <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground">{collection.title}</h2>
           </motion.div>
           {filtered.length === 0 ? (
             <motion.p className="text-center text-muted-foreground font-sans text-sm tracking-wide" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
