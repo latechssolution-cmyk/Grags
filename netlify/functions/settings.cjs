@@ -1,4 +1,4 @@
-const { getDb } = require("./utils/db");
+const { getDb } = require("./utils/db.cjs");
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
