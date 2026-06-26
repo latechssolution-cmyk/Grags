@@ -375,7 +375,7 @@ const ProductDetail = () => {
             {/* Back link */}
             <Link
               to="/"
-              className="hidden md:inline-flex items-center gap-1.5 text-[10px] tracking-ultra-wide uppercase font-sans text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden md:flex items-center gap-1.5 text-[10px] tracking-ultra-wide uppercase font-sans text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-3 h-3" /> The Edit
             </Link>
