@@ -6,7 +6,7 @@ const reviews = [
   {
     name: "Ahmed R.",
     location: "Lahore",
-    text: "The fabric quality is unmatched. This polo feels like something from a European luxury house. GRAGGS has raised the bar for Pakistani menswear.",
+    text: "The fabric quality is unmatched. This polo feels like something from a European luxury house. GRAGS has raised the bar for Pakistani menswear.",
     rating: 5,
     product: "Textured Polo — Olive",
   },

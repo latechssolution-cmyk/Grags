@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, Minus, ChevronRight } from "lucide-react";
+import { ArrowLeft, Plus, Minus, ChevronRight, ShoppingBag, Check } from "lucide-react";
 import { useProducts, Product, getProductUrl } from "@/store/productStore";
+import { useCart } from "@/store/cartStore";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -295,6 +296,29 @@ const ProductDetail = () => {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [booking, setBooking] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
+  const [cartAdded, setCartAdded] = useState(false);
+  const [sizeError, setSizeError] = useState(false);
+  const { addItem } = useCart();
+
+  const handleAddToCart = () => {
+    if (product.sizes.length > 0 && !selectedSize) {
+      setSizeError(true);
+      setTimeout(() => setSizeError(false), 2000);
+      return;
+    }
+    const colorName = product.colorVariants?.[selectedVariant]?.name ?? "";
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.colorVariants?.[selectedVariant]?.image || product.image,
+      size: selectedSize || "One Size",
+      color: colorName,
+      quantity: 1,
+    });
+    setCartAdded(true);
+    setTimeout(() => setCartAdded(false), 2000);
+  };
 
   // Scroll to top on product change
   useEffect(() => { window.scrollTo(0, 0); }, [routeParam]);
@@ -464,6 +488,17 @@ const ProductDetail = () => {
               </div>
             )}
 
+            {/* Size error hint */}
+            {sizeError && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[10px] font-sans text-red-400 tracking-wide"
+              >
+                Please select a size before adding to cart.
+              </motion.p>
+            )}
+
             {/* Stock */}
             <p className="text-[10px] font-sans text-muted-foreground tracking-wide">
               {product.stock > 0
@@ -485,14 +520,31 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Desktop Book Now */}
-            <button
-              onClick={() => setBooking(true)}
-              disabled={product.stock === 0}
-              className="hidden md:block w-full py-4 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-            >
-              {product.stock > 0 ? `Book Now — ${product.price}` : "Out of Stock"}
-            </button>
+            {/* Desktop: Add to Cart + Book Now */}
+            <div className="hidden md:flex flex-col gap-2">
+              <button
+                onClick={handleAddToCart}
+                disabled={product.stock === 0}
+                className={`w-full py-4 text-xs tracking-ultra-wide uppercase font-sans font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                  cartAdded
+                    ? "bg-green-600 text-white"
+                    : "bg-foreground text-background hover:bg-foreground/90"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {cartAdded ? (
+                  <><Check className="w-3.5 h-3.5" /> Added to Cart</>
+                ) : (
+                  <><ShoppingBag className="w-3.5 h-3.5" /> Add to Cart</>
+                )}
+              </button>
+              <button
+                onClick={() => setBooking(true)}
+                disabled={product.stock === 0}
+                className="w-full py-3 border border-foreground text-foreground text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-foreground hover:text-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+              >
+                {product.stock > 0 ? "Book Now" : "Out of Stock"}
+              </button>
+            </div>
 
             {/* ── Accordions ── */}
             <div className="pt-2">
@@ -659,19 +711,28 @@ const ProductDetail = () => {
 
       {/* ── Mobile sticky CTA ── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border px-5 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans truncate">
               {selectedSize ? `Size: ${selectedSize}` : "Select a size"}
             </p>
             <p className="text-sm font-sans font-semibold text-foreground">{product.price}</p>
           </div>
           <button
+            onClick={handleAddToCart}
+            disabled={product.stock === 0}
+            className={`flex-1 py-3.5 text-xs tracking-ultra-wide uppercase font-sans font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 ${
+              cartAdded ? "bg-green-600 text-white" : "bg-foreground text-background hover:bg-foreground/90"
+            }`}
+          >
+            {cartAdded ? <><Check className="w-3 h-3" /> Added</> : <><ShoppingBag className="w-3 h-3" /> Add to Cart</>}
+          </button>
+          <button
             onClick={() => setBooking(true)}
             disabled={product.stock === 0}
-            className="flex-1 py-3.5 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className="px-4 py-3.5 border border-foreground text-foreground text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-foreground hover:text-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
-            {product.stock > 0 ? "Book Now" : "Out of Stock"}
+            Book
           </button>
         </div>
       </div>

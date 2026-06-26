@@ -15,7 +15,7 @@ const NewsletterSection = () => {
       const res = await fetch(FORMSPREE, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ email, _subject: "Newsletter subscription — GRAGGS" }),
+        body: JSON.stringify({ email, _subject: "Newsletter subscription — GRAGS" }),
       });
       if (res.ok) {
         setStatus("sent");
@@ -57,7 +57,7 @@ const NewsletterSection = () => {
           viewport={{ once: true }}
           transition={{ delay: 0.3, duration: 0.7 }}
         >
-          Be the first to know about new drops, exclusive offers, and the GRAGGS
+          Be the first to know about new drops, exclusive offers, and the GRAGS
           story.
         </motion.p>
 

@@ -49,7 +49,7 @@ export function PrivacyPage() {
       <H2>Your Rights</H2>
       <P>You have the right to access, update, or delete your personal information. To exercise these rights, please contact us at the details below.</P>
       <H2>Contact</H2>
-      <P>For privacy-related enquiries, email us at support@graggs.com.</P>
+      <P>For privacy-related enquiries, email us at support@grags.com.</P>
     </PageLayout>
   );
 }
@@ -67,9 +67,9 @@ export function TermsPage() {
       <H2>Product Descriptions</H2>
       <P>We make every effort to display our products accurately. Colours may vary slightly due to monitor settings. Measurements are approximate and may vary by up to 1–2 cm.</P>
       <H2>Intellectual Property</H2>
-      <P>All content on this website, including images, text, and design, is the property of GRAGGS and may not be reproduced without written permission.</P>
+      <P>All content on this website, including images, text, and design, is the property of GRAGS and may not be reproduced without written permission.</P>
       <H2>Limitation of Liability</H2>
-      <P>GRAGGS shall not be liable for any indirect, incidental, or consequential damages arising from the use of our website or products.</P>
+      <P>GRAGS shall not be liable for any indirect, incidental, or consequential damages arising from the use of our website or products.</P>
       <H2>Changes to Terms</H2>
       <P>We reserve the right to update these terms at any time. Continued use of the website constitutes acceptance of the revised terms.</P>
     </PageLayout>

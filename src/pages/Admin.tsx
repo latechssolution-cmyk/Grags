@@ -31,18 +31,18 @@ const sendStatusEmail = async (status: OrderStatus, order: any): Promise<boolean
   await initEmailJS();
 
   const subjects: Record<OrderStatus, string> = {
-    Pending:   `Your GRAGGS Order #${order.id} is Pending`,
-    Confirmed: `Your GRAGGS Order #${order.id} Has Been Confirmed ✅`,
-    Shipped:   `Your GRAGGS Order #${order.id} Has Been Shipped 📦`,
-    Delivered: `Your GRAGGS Order #${order.id} Has Been Delivered 🎉`,
-    Cancelled: `Your GRAGGS Order #${order.id} Has Been Cancelled`,
+    Pending:   `Your GRAGS Order #${order.id} is Pending`,
+    Confirmed: `Your GRAGS Order #${order.id} Has Been Confirmed ✅`,
+    Shipped:   `Your GRAGS Order #${order.id} Has Been Shipped 📦`,
+    Delivered: `Your GRAGS Order #${order.id} Has Been Delivered 🎉`,
+    Cancelled: `Your GRAGS Order #${order.id} Has Been Cancelled`,
   };
 
   const intros: Record<OrderStatus, string> = {
     Pending:   "We have received your order and it is currently pending review. We will notify you as soon as it is confirmed.",
     Confirmed: "Great news — your order has been confirmed! We are now carefully preparing your items for dispatch. You will receive another update once your order ships.",
     Shipped:   "Your order is on its way! Our delivery partner has collected your package and it is heading to you now. Please keep an eye on your doorstep.",
-    Delivered: "Your GRAGGS order has been delivered! We hope you love your new pieces. Thank you for choosing GRAGGS.",
+    Delivered: "Your GRAGS order has been delivered! We hope you love your new pieces. Thank you for choosing GRAGS.",
     Cancelled: "We regret to inform you that your order has been cancelled. If you believe this is a mistake or require any assistance, please contact us immediately.",
   };
 
@@ -56,7 +56,7 @@ const sendStatusEmail = async (status: OrderStatus, order: any): Promise<boolean
 
   const message = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#ffffff;">
   <div style="background:#0a0a0a;padding:32px 40px;text-align:center;">
-    <p style="margin:0 0 6px;font-size:10px;letter-spacing:7px;color:#555;text-transform:uppercase;">GRAGGS</p>
+    <p style="margin:0 0 6px;font-size:10px;letter-spacing:7px;color:#555;text-transform:uppercase;">GRAGS</p>
     <p style="margin:0;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:3px;text-transform:uppercase;">${subjects[status]}</p>
   </div>
   <div style="padding:36px 40px;">
@@ -100,7 +100,7 @@ const sendStatusEmail = async (status: OrderStatus, order: any): Promise<boolean
     <p style="margin:0;font-size:13px;color:#aaa;line-height:1.6;">Questions? Simply reply to this email and we will help you out.</p>
   </div>
   <div style="background:#0a0a0a;padding:20px 40px;text-align:center;">
-    <p style="margin:0;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#444;">© GRAGGS · All Rights Reserved</p>
+    <p style="margin:0;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#444;">© GRAGS · All Rights Reserved</p>
   </div>
 </div>`;
 
@@ -447,7 +447,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
         className="w-full max-w-sm"
       >
         <div className="text-center mb-10">
-          <img src={logo} alt="GRAGGS" className="h-6 w-auto mx-auto mb-8 opacity-90" />
+          <img src={logo} alt="GRAGS" className="h-6 w-auto mx-auto mb-8 opacity-90" />
           <div className="flex items-center justify-center gap-2 mb-2">
             <Lock className="w-3.5 h-3.5 text-muted-foreground" />
             <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans">Admin Access</p>
@@ -511,7 +511,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
         </form>
 
         <p className="text-center text-[10px] text-muted-foreground font-sans mt-8">
-          GRAGGS · Admin Panel
+          GRAGS · Admin Panel
         </p>
       </motion.div>
     </div>
@@ -693,7 +693,7 @@ const Admin = () => {
 
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
         <div className="flex items-center justify-between px-5 md:px-10 py-4">
-          <a href="/" className="text-2xl font-roman font-bold tracking-ultra-wide text-foreground">GRAGGS</a>
+          <a href="/" className="text-2xl font-roman font-bold tracking-ultra-wide text-foreground">GRAGS</a>
           <div className="flex items-center gap-5">
             <span className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans">Admin Panel</span>
             <button
@@ -1032,7 +1032,7 @@ const Admin = () => {
             <div>
               <label className={labelCls}>Contact Email</label>
               <p className="text-xs text-muted-foreground font-sans mb-2">Shown on the Contact page and in the footer</p>
-              <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={inputCls} placeholder="support@graggs.com" />
+              <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={inputCls} placeholder="support@grags.com" />
             </div>
             <button onClick={() => updateSettings({ whatsappNumber: whatsappNum, contactEmail })}
               className="flex items-center gap-2 px-6 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity">

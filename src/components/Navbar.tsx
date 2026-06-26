@@ -89,7 +89,7 @@ const AboutModal = ({ onClose }) => {
       const res = await fetch("https://formspree.io/f/mjgqwpbq", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ name, email, message, _subject: `FAQ from ${name} — GRAGGS` }),
+        body: JSON.stringify({ name, email, message, _subject: `FAQ from ${name} — GRAGS` }),
       });
       if (res.ok) {
         setStatus("sent");
@@ -382,7 +382,7 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
           <Link to="/">
             <img
               src={logo}
-              alt="GRAGGS"
+              alt="GRAGS"
               className="h-5 md:h-6 w-auto object-contain"
             />
           </Link>

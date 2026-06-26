@@ -36,7 +36,7 @@ const Footer = () => {
           {/* Brand col */}
           <div className="col-span-2 md:col-span-1">
             <h3 className="text-2xl font-roman font-bold tracking-ultra-wide text-foreground mb-4">
-              GRAGGS
+              GRAGS
             </h3>
             <p className="text-sm font-sans text-muted-foreground leading-relaxed max-w-xs">
               Heritage menswear for the modern gentleman. Crafted in Pakistan,
@@ -143,7 +143,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs font-sans text-muted-foreground">
-            © {new Date().getFullYear()} GRAGGS. All rights reserved.
+            © {new Date().getFullYear()} GRAGS. All rights reserved.
           </p>
           <div className="flex gap-6">
             <a href="#" className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors">

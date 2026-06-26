@@ -10,9 +10,9 @@ const headers = {
 const defaultSettings = {
   key: "site_settings",
   whatsappNumber: "923049172098",
-  contactEmail: "support@graggs.com",
+  contactEmail: "support@grags.com",
   couponCodes: [
-    { id: "1", code: "GRAGGS10", discount: 10, type: "percentage", active: true },
+    { id: "1", code: "GRAGS10", discount: 10, type: "percentage", active: true },
     { id: "2", code: "WELCOME500", discount: 500, type: "fixed", active: true },
   ],
   collections: [
