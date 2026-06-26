@@ -228,6 +228,8 @@ export function useProducts() {
           const merged = data.map((p) => {
             const lp = localById[p.id];
             return {
+              reviews: [],
+              discountPercent: 0,
               ...p,
               image: p.image || lp?.image || "",
               colorVariants: (p.colorVariants ?? []).map((v: ColorVariant, i: number) => ({

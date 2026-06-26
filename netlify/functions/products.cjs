@@ -25,6 +25,8 @@ const defaultProducts = [
     gender: "Men",
     fabric: "100% Pique Cotton",
     careInstructions: ["Machine wash cold", "Do not bleach", "Tumble dry low", "Iron on low heat", "Do not dry clean"],
+    discountPercent: 0,
+    reviews: [],
   },
   {
     id: "2",
@@ -43,6 +45,8 @@ const defaultProducts = [
     gender: "Men",
     fabric: "100% Cotton Interlock",
     careInstructions: ["Hand wash or machine wash cold", "Wash separately first few washes", "Do not bleach", "Dry flat in shade", "Warm iron if needed"],
+    discountPercent: 0,
+    reviews: [],
   },
   {
     id: "3",
@@ -61,6 +65,8 @@ const defaultProducts = [
     gender: "Men",
     fabric: "55% Linen, 45% Cotton",
     careInstructions: ["Hand wash recommended", "Use mild detergent", "Do not wring", "Dry flat in shade", "Iron while slightly damp for best results"],
+    discountPercent: 0,
+    reviews: [],
   },
   {
     id: "4",
@@ -79,6 +85,8 @@ const defaultProducts = [
     gender: "Men",
     fabric: "98% Cotton, 2% Elastane",
     careInstructions: ["Machine wash cold with similar colours", "Do not bleach", "Tumble dry low", "Iron on medium heat", "Dry clean if needed"],
+    discountPercent: 0,
+    reviews: [],
   },
 ];
 

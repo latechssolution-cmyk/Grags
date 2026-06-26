@@ -3,7 +3,7 @@ const { getDb } = require("./utils/db.cjs");
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
 // Seed data
@@ -92,6 +92,16 @@ exports.handler = async (event) => {
         headers,
         body: JSON.stringify({ success: true, id, status }),
       };
+    }
+
+    // DELETE: Remove an order
+    if (event.httpMethod === "DELETE") {
+      const { id } = event.queryStringParameters || {};
+      if (!id) {
+        return { statusCode: 400, headers, body: "Missing order id in query parameter" };
+      }
+      await collection.deleteOne({ id });
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, id }) };
     }
 
     return { statusCode: 405, headers, body: "Method Not Allowed" };

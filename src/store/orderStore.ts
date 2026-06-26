@@ -140,5 +140,17 @@ export function useOrders() {
       .catch((err) => console.error("Error creating order in MongoDB:", err));
   }, []);
 
-  return { orders, updateStatus, addOrder };
+  const deleteOrder = useCallback((id: string) => {
+    const current = load();
+    const next = current.filter((o) => o.id !== id);
+    saveOrders(next);
+    setOrders(next);
+    notify();
+
+    fetch(`/.netlify/functions/orders?id=${id}`, {
+      method: "DELETE",
+    }).catch((err) => console.error("Error deleting order from MongoDB:", err));
+  }, []);
+
+  return { orders, updateStatus, addOrder, deleteOrder };
 }

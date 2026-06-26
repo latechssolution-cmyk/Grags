@@ -577,7 +577,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   const { products, addProduct, updateProduct, deleteProduct } = useProducts();
   const { hero, updateHero, defaultImage } = useHero();
   const { fabric, updateFabric, defaultImage: fabricDefaultImage } = useFabric();
-  const { orders, updateStatus } = useOrders();
+  const { orders, updateStatus, deleteOrder } = useOrders();
   const { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, addCollection, updateCollection, deleteCollection } = useSettings();
   const { articles, addArticle, updateArticle, deleteArticle } = useJournal();
 
@@ -1034,6 +1034,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
                     <tr key={o.id} className="border-b border-border hover:bg-secondary/50 transition-colors">
                       <td className="px-3 py-3">
                         <button onClick={() => setSelectedOrder(o)} className="p-1 text-muted-foreground hover:text-foreground transition-colors" title="View details"><Eye className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => { if (confirm(`Delete order ${o.id}?`)) deleteOrder(o.id); }} className="p-1 text-muted-foreground hover:text-destructive transition-colors" title="Delete order"><Trash2 className="w-3.5 h-3.5" /></button>
                       </td>
                       <td className="px-3 py-3 text-foreground font-medium whitespace-nowrap">{o.id}</td>
                       <td className="px-3 py-3 text-foreground whitespace-nowrap">{o.customerName}</td>
