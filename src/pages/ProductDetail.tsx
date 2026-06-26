@@ -280,24 +280,16 @@ const ProductDetail = () => {
   const { code: routeParam } = useParams<{ code: string }>();
   const { products } = useProducts();
 
-  // Extract the stable code (e.g. f123-337d) or ID from the SEO slug (e.g. textured-polo-f123-337d)
-  const extractedCode = routeParam ? (() => {
-    // 1. If it matches the exact product code format directly (e.g. f123-337d)
-    if (/^[a-z0-9]{4}-[a-z0-9]{4}$/i.test(routeParam)) {
-      return routeParam;
-    }
-    // 2. If it ends with the product code format (e.g. -f123-337d)
-    const match = routeParam.match(/-([a-z0-9]{4}-[a-z0-9]{4})$/i);
-    if (match) return match[1];
-    // 3. Otherwise, try getting the last part (for ID fallback like textured-polo-1)
-    const parts = routeParam.split("-");
-    if (parts.length > 1) {
-      return parts[parts.length - 1];
-    }
-    return routeParam;
-  })() : "";
-
-  const product = products.find((p) => p.sku === extractedCode || p.id === extractedCode);
+  const product = products.find((p) => {
+    if (!routeParam) return false;
+    // 1. Exact match by SKU or ID
+    if (p.sku === routeParam || p.id === routeParam) return true;
+    // 2. Suffix match by SKU (e.g. -f123-337d)
+    if (p.sku && routeParam.endsWith(`-${p.sku}`)) return true;
+    // 3. Suffix match by ID (e.g. -1 or -uuid)
+    if (p.id && routeParam.endsWith(`-${p.id}`)) return true;
+    return false;
+  });
 
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -305,7 +297,7 @@ const ProductDetail = () => {
   const [openSection, setOpenSection] = useState<string | null>(null);
 
   // Scroll to top on product change
-  useEffect(() => { window.scrollTo(0, 0); }, [code]);
+  useEffect(() => { window.scrollTo(0, 0); }, [routeParam]);
 
   const toggleSection = (key: string) =>
     setOpenSection((prev) => (prev === key ? null : key));
