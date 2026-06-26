@@ -19,12 +19,14 @@ export interface Collection {
 
 export interface SiteSettings {
   whatsappNumber: string;
+  contactEmail?: string;
   couponCodes: CouponCode[];
   collections: Collection[];
 }
 
 const defaultSettings: SiteSettings = {
   whatsappNumber: "923049172098",
+  contactEmail: "support@graggs.com",
   couponCodes: [
     { id: "1", code: "GRAGGS10", discount: 10, type: "percentage", active: true },
     { id: "2", code: "WELCOME500", discount: 500, type: "fixed", active: true },
@@ -117,7 +119,8 @@ export function useSettings() {
     saveAndSync(next);
   }, [saveAndSync]);
 
-  const applyCoupon = useCallback((code: string, subtotal: number): { valid: boolean; discount: number; message: string } => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const applyCoupon = useCallback((code: string, subtotal: number, _lines?: unknown): { valid: boolean; discount: number; message: string } => {
     const current = load();
     const coupon = current.couponCodes.find(c => c.code.toUpperCase() === code.toUpperCase() && c.active);
     if (!coupon) return { valid: false, discount: 0, message: "Invalid or expired coupon code" };

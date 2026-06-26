@@ -276,5 +276,13 @@ export function useProducts() {
     [products]
   );
 
-  return { products, addProduct, updateProduct, deleteProduct, getByTag, getByCollection };
+  const getById = useCallback((id: string) => products.find((p) => p.id === id || p.sku === id), [products]);
+
+  const getVariantStock = useCallback((product: Product, color?: string): number => {
+    if (!color) return product.stock;
+    const variant = product.colorVariants.find((v) => v.name === color);
+    return variant ? product.stock : product.stock;
+  }, []);
+
+  return { products, addProduct, updateProduct, deleteProduct, getByTag, getByCollection, getById, getVariantStock };
 }

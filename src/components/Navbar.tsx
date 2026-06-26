@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, MessageCircle, Package, ChevronRight, Mail, Phone, FileText, Send } from "lucide-react";
+import { Menu, X, MessageCircle, Package, ChevronRight, Mail, Phone, Send, ShoppingBag, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSettings } from "@/store/settingsStore";
+import { useCart } from "@/store/cartStore";
+import CartDrawer from "./CartDrawer";
+import AuthModal from "./AuthModal";
+import ThemeToggle from "./ThemeToggle";
 import logo from "@/assets/logo.png";
 
 const navLinks = [
@@ -358,10 +362,13 @@ const AboutModal = ({ onClose }) => {
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState(null); // null | 'journals' | 'about'
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const { settings } = useSettings();
+  const { count } = useCart();
 
-  const openModal = (modal) => {
+  const openModal = (modal: string) => {
     setMenuOpen(false);
     setTimeout(() => setActiveModal(modal), menuOpen ? 300 : 0);
   };
@@ -381,11 +388,11 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
           </Link>
 
           {/* Right Section */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
 
             {/* Desktop Navigation */}
             {!transparent && (
-              <div className="hidden lg:flex items-center gap-8">
+              <div className="hidden lg:flex items-center gap-8 mr-4">
                 {navLinks.map((link) =>
                   link.modal ? (
                     <button
@@ -408,6 +415,32 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
               </div>
             )}
 
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
+            {/* User */}
+            <button
+              onClick={() => setAuthOpen(true)}
+              aria-label="Account"
+              className="p-2 rounded-full hover:bg-foreground/10 transition-colors"
+            >
+              <User className="w-[18px] h-[18px] text-foreground" />
+            </button>
+
+            {/* Cart */}
+            <button
+              onClick={() => setCartOpen(true)}
+              aria-label="Cart"
+              className="relative p-2 rounded-full hover:bg-foreground/10 transition-colors"
+            >
+              <ShoppingBag className="w-[18px] h-[18px] text-foreground" />
+              {count > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {count > 9 ? "9+" : count}
+                </span>
+              )}
+            </button>
+
             {/* Mobile Hamburger */}
             <button
               onClick={() => setMenuOpen(true)}
@@ -419,6 +452,9 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
           </div>
         </div>
       </nav>
+
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
 
       {/* Mobile Menu */}
       <AnimatePresence>

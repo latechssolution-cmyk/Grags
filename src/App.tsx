@@ -13,6 +13,9 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import CollectionPage from "./pages/CollectionPage";
 import ProductDetail from "./pages/ProductDetail";
+import CheckoutPage from "./pages/CheckoutPage";
+import { PrivacyPage, TermsPage, ContactPage, JournalPage } from "./pages/LegalPages";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +25,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/new-in" element={<NewIn />} />
@@ -31,6 +35,11 @@ const App = () => (
           <Route path="/heritage" element={<Heritage />} />
           <Route path="/collections/:slug" element={<CollectionPage />} />
           <Route path="/product/:code" element={<ProductDetail />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/journal" element={<JournalPage />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

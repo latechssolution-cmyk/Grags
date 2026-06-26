@@ -6,6 +6,8 @@ import { useProducts, Product, ColorVariant, generateProductCode } from "@/store
 import { useHero, useFabric } from "@/store/heroStore";
 import { useOrders, OrderStatus } from "@/store/orderStore";
 import { useSettings, CouponCode, Collection } from "@/store/settingsStore";
+import OrderDetailsModal from "@/components/OrderDetailsModal";
+import { Order } from "@/store/orderStore";
 
 const EMAILJS_SERVICE_ID  = "service_lzhp8t6";
 const EMAILJS_TEMPLATE_ID = "template_mq2zq75";
@@ -560,6 +562,7 @@ const Admin = () => {
   const [orderSearch, setOrderSearch] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>("ALL");
   const [orderDateFilter, setOrderDateFilter] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [heroForm, setHeroForm] = useState(hero);
   const [fabricForm, setFabricForm] = useState(fabric);
   const [couponForm, setCouponForm] = useState({ code: "", discount: 0, type: "percentage" as "percentage" | "fixed" });
@@ -823,7 +826,7 @@ const Admin = () => {
               <table className="w-full text-sm font-sans">
                 <thead>
                   <tr className="border-b border-border bg-secondary">
-                    {["ID", "Customer", "Email", "Phone", "Address", "Products", "Coupon", "Subtotal", "Discount", "Total", "Shipping", "Payment", "Date", "Status"].map((h) => (
+                    {["", "ID", "Customer", "Email", "Phone", "Address", "Products", "Coupon", "Subtotal", "Discount", "Total", "Shipping", "Payment", "Date", "Status"].map((h) => (
                       <th key={h} className="text-left px-3 py-3 text-[9px] tracking-ultra-wide uppercase text-muted-foreground font-medium whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -831,6 +834,9 @@ const Admin = () => {
                 <tbody>
                   {filteredOrders.map((o) => (
                     <tr key={o.id} className="border-b border-border hover:bg-secondary/50 transition-colors">
+                      <td className="px-3 py-3">
+                        <button onClick={() => setSelectedOrder(o)} className="p-1 text-muted-foreground hover:text-foreground transition-colors" title="View details"><Eye className="w-3.5 h-3.5" /></button>
+                      </td>
                       <td className="px-3 py-3 text-foreground font-medium whitespace-nowrap">{o.id}</td>
                       <td className="px-3 py-3 text-foreground whitespace-nowrap">{o.customerName}</td>
                       <td className="px-3 py-3 text-muted-foreground text-xs">{o.email}</td>
@@ -852,12 +858,14 @@ const Admin = () => {
                       </td>
                     </tr>
                   ))}
-                  {filteredOrders.length === 0 && <tr><td colSpan={14} className="px-4 py-8 text-center text-muted-foreground">No orders found.</td></tr>}
+                  {filteredOrders.length === 0 && <tr><td colSpan={15} className="px-4 py-8 text-center text-muted-foreground">No orders found.</td></tr>}
                 </tbody>
               </table>
             </div>
           </motion.div>
         )}
+
+        <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
 
         {/* ─── Collections ─── */}
         {tab === "collections" && (

@@ -7,6 +7,7 @@ export interface OrderProduct {
   name: string;
   price: string;
   size: string;
+  color?: string;
   quantity: number;
 }
 
