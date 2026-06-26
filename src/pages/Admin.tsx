@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen, LogOut, Eye, EyeOff, Lock } from "lucide-react";
+import logo from "@/assets/logo.png";
 import { useProducts, Product, ColorVariant, generateProductCode } from "@/store/productStore";
 import { useHero, useFabric } from "@/store/heroStore";
 import { useOrders, OrderStatus } from "@/store/orderStore";
@@ -390,8 +391,160 @@ const ProductForm = ({
   );
 };
 
+// ─── Auth helpers ─────────────────────────────────────────
+const TOKEN_KEY = "graggs_admin_token";
+
+async function validateToken(token: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/.netlify/functions/auth?token=${token}`);
+    const data = await res.json();
+    return !!data.valid;
+  } catch {
+    return false;
+  }
+}
+
+// ─── Admin Login Screen ───────────────────────────────────
+const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/.netlify/functions/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        sessionStorage.setItem(TOKEN_KEY, data.token);
+        onLogin();
+      } else {
+        setError("Invalid username or password.");
+      }
+    } catch {
+      setError("Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center px-5">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-sm"
+      >
+        <div className="text-center mb-10">
+          <img src={logo} alt="GRAGGS" className="h-6 w-auto mx-auto mb-8 opacity-90" />
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+            <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans">Admin Access</p>
+          </div>
+          <h1 className="text-xl font-serif font-bold text-foreground">Sign In</h1>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans block mb-1.5">Username</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+              required
+              className="w-full bg-secondary text-foreground border border-border px-4 py-3 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans block mb-1.5">Password</label>
+            <div className="relative">
+              <input
+                type={showPass ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+                className="w-full bg-secondary text-foreground border border-border px-4 py-3 pr-11 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="text-xs text-red-500 font-sans"
+              >
+                {error}
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:opacity-90 disabled:opacity-50 transition-all duration-300 mt-2"
+          >
+            {loading ? "Signing in…" : "Sign In"}
+          </button>
+        </form>
+
+        <p className="text-center text-[10px] text-muted-foreground font-sans mt-8">
+          GRAGGS · Admin Panel
+        </p>
+      </motion.div>
+    </div>
+  );
+};
+
 // ─── Admin Page ───────────────────────────────────────────
 const Admin = () => {
+  const [authed, setAuthed] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Validate stored session token on mount
+  useEffect(() => {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    if (!token) { setAuthChecked(true); return; }
+    validateToken(token).then((valid) => {
+      if (!valid) sessionStorage.removeItem(TOKEN_KEY);
+      setAuthed(valid);
+      setAuthChecked(true);
+    });
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    if (token) {
+      sessionStorage.removeItem(TOKEN_KEY);
+      fetch(`/.netlify/functions/auth?token=${token}`, { method: "DELETE" }).catch(() => {});
+    }
+    setAuthed(false);
+  }, []);
+
+  // Show nothing while checking (avoids flash of login screen)
+  if (!authChecked) return <div className="min-h-screen bg-background" />;
+  if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
+
   const { products, addProduct, updateProduct, deleteProduct } = useProducts();
   const { hero, updateHero, defaultImage } = useHero();
   const { fabric, updateFabric, defaultImage: fabricDefaultImage } = useFabric();
@@ -537,7 +690,16 @@ const Admin = () => {
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
         <div className="flex items-center justify-between px-5 md:px-10 py-4">
           <a href="/" className="text-2xl font-roman font-bold tracking-ultra-wide text-foreground">GRAGGS</a>
-          <span className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans">Admin Panel</span>
+          <div className="flex items-center gap-5">
+            <span className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans">Admin Panel</span>
+            <button
+              onClick={handleLogout}
+              title="Sign out"
+              className="flex items-center gap-1.5 text-xs tracking-ultra-wide uppercase font-sans text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Sign Out
+            </button>
+          </div>
         </div>
       </nav>
 
