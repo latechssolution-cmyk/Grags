@@ -28,6 +28,8 @@ export interface Product {
   gender?: string;
   fabric?: string;
   careInstructions?: string[];
+  showInstallments?: boolean;
+  installments?: number;
 }
 
 export function generateProductCode(): string {

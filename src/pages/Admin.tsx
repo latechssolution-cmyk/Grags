@@ -148,6 +148,8 @@ const ProductForm = ({
       gender: "Men",
       fabric: "",
       careInstructions: [],
+      showInstallments: true,
+      installments: 4,
     }
   );
   const [sizeInput, setSizeInput] = useState("");
@@ -263,6 +265,31 @@ const ProductForm = ({
             className={`${inputCls} resize-none`}
           />
           <p className="text-[10px] text-muted-foreground font-sans mt-1">Each line becomes one bullet point on the product page.</p>
+        </div>
+
+        {/* Installments */}
+        <div className="space-y-3 border-t border-border pt-4">
+          <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Easy Installments</p>
+          <label className="flex items-center gap-3 cursor-pointer" onClick={() => setForm((f) => ({ ...f, showInstallments: !f.showInstallments }))}>
+            <div className={`w-4 h-4 border flex-shrink-0 ${form.showInstallments ? "bg-foreground border-foreground" : "border-border"} flex items-center justify-center`}>
+              {form.showInstallments && <div className="w-2 h-2 bg-background" />}
+            </div>
+            <span className="text-sm font-sans text-foreground">Show installment badge on product page</span>
+          </label>
+          {form.showInstallments && (
+            <div>
+              <label className={labelCls}>Number of Installments</label>
+              <select
+                value={form.installments ?? 4}
+                onChange={(e) => setForm((f) => ({ ...f, installments: Number(e.target.value) }))}
+                className={inputCls}
+              >
+                {[2, 3, 4, 5, 6, 8, 10, 12].map((n) => (
+                  <option key={n} value={n}>{n} installments</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
 

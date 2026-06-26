@@ -327,8 +327,10 @@ const ProductDetail = () => {
   const isBottom = product.tags?.includes("BOTTOMS");
 
   // Parse price for installment badge
+  const showInstallments = product.showInstallments !== false;
+  const installmentCount = product.installments ?? 4;
   const priceNum = parseInt(product.price.replace(/[^0-9]/g, ""), 10);
-  const installmentAmt = isNaN(priceNum) ? null : Math.ceil(priceNum / 4);
+  const installmentAmt = showInstallments && !isNaN(priceNum) ? Math.ceil(priceNum / installmentCount) : null;
 
   // Recommended: same tags or collections, exclude current product
   const recommended = products.filter(
@@ -396,7 +398,7 @@ const ProductDetail = () => {
                 <p className="text-xl font-sans font-semibold text-foreground">{product.price}</p>
                 {installmentAmt && (
                   <span className="text-[10px] font-sans text-muted-foreground tracking-wide bg-secondary px-2 py-0.5">
-                    4 Easy Installments of PKR {installmentAmt.toLocaleString()}
+                    {installmentCount} Easy Installments of PKR {installmentAmt.toLocaleString()}
                   </span>
                 )}
               </div>
