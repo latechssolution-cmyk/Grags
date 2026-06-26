@@ -535,35 +535,8 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
   );
 };
 
-// ─── Admin Page ───────────────────────────────────────────
-const Admin = () => {
-  const [authed, setAuthed] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
-
-  // Validate stored session token on mount
-  useEffect(() => {
-    const token = sessionStorage.getItem(TOKEN_KEY);
-    if (!token) { setAuthChecked(true); return; }
-    validateToken(token).then((valid) => {
-      if (!valid) sessionStorage.removeItem(TOKEN_KEY);
-      setAuthed(valid);
-      setAuthChecked(true);
-    });
-  }, []);
-
-  const handleLogout = useCallback(async () => {
-    const token = sessionStorage.getItem(TOKEN_KEY);
-    if (token) {
-      sessionStorage.removeItem(TOKEN_KEY);
-      fetch(`/.netlify/functions/auth?token=${token}`, { method: "DELETE" }).catch(() => {});
-    }
-    setAuthed(false);
-  }, []);
-
-  // Show nothing while checking (avoids flash of login screen)
-  if (!authChecked) return <div className="min-h-screen bg-background" />;
-  if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
-
+// ─── Admin Panel (authenticated view) ────────────────────
+const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   const { products, addProduct, updateProduct, deleteProduct } = useProducts();
   const { hero, updateHero, defaultImage } = useHero();
   const { fabric, updateFabric, defaultImage: fabricDefaultImage } = useFabric();
@@ -736,7 +709,7 @@ const Admin = () => {
           <div className="flex items-center gap-5">
             <span className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans">Admin Panel</span>
             <button
-              onClick={handleLogout}
+              onClick={onLogout}
               title="Sign out"
               className="flex items-center gap-1.5 text-xs tracking-ultra-wide uppercase font-sans text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -1178,6 +1151,35 @@ const Admin = () => {
       <div className="grain-overlay" />
     </div>
   );
+};
+
+// ─── Admin (auth wrapper) ─────────────────────────────────
+const Admin = () => {
+  const [authed, setAuthed] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    if (!token) { setAuthChecked(true); return; }
+    validateToken(token).then((valid) => {
+      if (!valid) sessionStorage.removeItem(TOKEN_KEY);
+      setAuthed(valid);
+      setAuthChecked(true);
+    });
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    if (token) {
+      sessionStorage.removeItem(TOKEN_KEY);
+      fetch(`/.netlify/functions/auth?token=${token}`, { method: "DELETE" }).catch(() => {});
+    }
+    setAuthed(false);
+  }, []);
+
+  if (!authChecked) return <div className="min-h-screen bg-background" />;
+  if (!authed) return <AdminLogin onLogin={() => setAuthed(true)} />;
+  return <AdminPanel onLogout={handleLogout} />;
 };
 
 export default Admin;
