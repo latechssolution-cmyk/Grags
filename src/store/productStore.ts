@@ -11,6 +11,14 @@ export interface ColorVariant {
   image: string; // data URL or asset URL for this color
 }
 
+export interface ProductReview {
+  id: string;
+  name: string;
+  rating: number; // 1–5
+  text: string;
+  date: string;   // ISO date string
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -30,6 +38,22 @@ export interface Product {
   careInstructions?: string[];
   showInstallments?: boolean;
   installments?: number;
+  discountPercent?: number;
+  reviews?: ProductReview[];
+}
+
+export type StockStatus = "in" | "limited" | "out";
+
+export function stockStatus(qty: number): StockStatus {
+  if (qty <= 0) return "out";
+  if (qty <= 5) return "limited";
+  return "in";
+}
+
+export function stockLabel(qty: number): string {
+  if (qty <= 0) return "Out of Stock";
+  if (qty <= 5) return `Only ${qty} left`;
+  return "In Stock";
 }
 
 export function generateProductCode(): string {
@@ -152,6 +176,7 @@ function loadProducts(): Product[] {
           gender: "Men",
           fabric: "",
           careInstructions: [],
+          reviews: [],
           ...p
         };
         // Enforce the new xxxx-xxxx unique product code format
@@ -284,5 +309,24 @@ export function useProducts() {
     return variant ? product.stock : product.stock;
   }, []);
 
-  return { products, addProduct, updateProduct, deleteProduct, getByTag, getByCollection, getById, getVariantStock };
+  const addReview = useCallback((productId: string, review: ProductReview) => {
+    const current = loadProducts();
+    const next = current.map((p) =>
+      p.id === productId
+        ? { ...p, reviews: [...(p.reviews ?? []), review] }
+        : p
+    );
+    saveProducts(next);
+    setProducts(next);
+    notify();
+
+    const updatedReviews = next.find((p) => p.id === productId)?.reviews ?? [];
+    fetch(`/.netlify/functions/products?id=${productId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reviews: updatedReviews }),
+    }).catch((err) => console.error("Error syncing review to MongoDB:", err));
+  }, []);
+
+  return { products, addProduct, updateProduct, deleteProduct, getByTag, getByCollection, getById, getVariantStock, addReview };
 }

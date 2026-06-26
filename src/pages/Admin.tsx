@@ -304,6 +304,26 @@ const ProductForm = ({
           <p className="text-[10px] text-muted-foreground font-sans mt-1">Each line becomes one bullet point on the product page.</p>
         </div>
 
+        {/* Discount */}
+        <div className="space-y-3 border-t border-border pt-4">
+          <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Discount</p>
+          <div>
+            <label className={labelCls}>Discount Percentage <span className="text-muted-foreground/60 normal-case">(leave 0 for none)</span></label>
+            <div className="relative">
+              <input
+                type="number"
+                min={0}
+                max={90}
+                value={(form as any).discountPercent ?? 0}
+                onChange={(e) => setForm((f: any) => ({ ...f, discountPercent: Number(e.target.value) || 0 }))}
+                className={inputCls}
+                placeholder="0"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-sans text-muted-foreground">%</span>
+            </div>
+          </div>
+        </div>
+
         {/* Installments */}
         <div className="space-y-3 border-t border-border pt-4">
           <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Easy Installments</p>

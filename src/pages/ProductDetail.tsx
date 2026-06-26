@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, Minus, ChevronRight, ShoppingBag, Check } from "lucide-react";
-import { useProducts, Product, getProductUrl } from "@/store/productStore";
+import { ArrowLeft, Plus, Minus, ChevronRight, ShoppingBag, Check, Star } from "lucide-react";
+import { useProducts, Product, getProductUrl, ProductReview } from "@/store/productStore";
 import { useCart } from "@/store/cartStore";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
@@ -144,6 +144,19 @@ const ImageCarousel = ({ images, name }: { images: string[]; name: string }) => 
   );
 };
 
+// ── Star Rating Display ───────────────────────────────────
+const StarRating = ({ rating, size = 14 }: { rating: number; size?: number }) => (
+  <div className="flex items-center gap-0.5">
+    {[1, 2, 3, 4, 5].map((i) => (
+      <Star
+        key={i}
+        style={{ width: size, height: size }}
+        className={i <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-border"}
+      />
+    ))}
+  </div>
+);
+
 // ── Size Guide ────────────────────────────────────────────
 const SizeGuide = ({ sizes, isBottom }: { sizes: string[]; isBottom: boolean }) => {
   const [activeSize, setActiveSize] = useState<string>(sizes[0] ?? "");
@@ -279,7 +292,7 @@ const RecommendedCard = ({
 // ── Main Page ─────────────────────────────────────────────
 const ProductDetail = () => {
   const { code: routeParam } = useParams<{ code: string }>();
-  const { products } = useProducts();
+  const { products, addReview } = useProducts();
 
   const product = products.find((p) => {
     if (!routeParam) return false;
@@ -299,6 +312,13 @@ const ProductDetail = () => {
   const [cartAdded, setCartAdded] = useState(false);
   const [sizeError, setSizeError] = useState(false);
   const { addItem } = useCart();
+
+  // Review form state
+  const [reviewName, setReviewName] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [hoverRating, setHoverRating] = useState(0);
 
   const handleAddToCart = () => {
     if (product.sizes.length > 0 && !selectedSize) {
@@ -418,8 +438,26 @@ const ProductDetail = () => {
               <h1 className="text-2xl md:text-3xl font-serif font-bold text-foreground uppercase leading-tight tracking-wide">
                 {product.name}
               </h1>
+              {/* Rating summary */}
+              {(product.reviews ?? []).length > 0 && (() => {
+                const reviews = product.reviews!;
+                const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+                return (
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <StarRating rating={avg} size={12} />
+                    <span className="text-[10px] font-sans text-muted-foreground">
+                      {avg.toFixed(1)} · {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+                    </span>
+                  </div>
+                );
+              })()}
               <div className="flex items-baseline gap-3 mt-2 flex-wrap">
                 <p className="text-xl font-sans font-semibold text-foreground">{product.price}</p>
+                {product.discountPercent && product.discountPercent > 0 ? (
+                  <span className="text-[10px] font-sans font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 tracking-wide">
+                    {product.discountPercent}% OFF
+                  </span>
+                ) : null}
                 {installmentAmt && (
                   <span className="text-[10px] font-sans text-muted-foreground tracking-wide bg-secondary px-2 py-0.5">
                     {installmentCount} Easy Installments of PKR {installmentAmt.toLocaleString()}
@@ -673,6 +711,150 @@ const ProductDetail = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* ── Customer Reviews ── */}
+        {product && (
+          <section className="px-5 md:px-0 mt-16 md:mt-24">
+            <div className="border-t border-border pt-10">
+              {/* Header */}
+              <div className="flex items-end justify-between mb-8">
+                <div>
+                  <p className="text-[10px] tracking-mega-wide uppercase text-muted-foreground font-sans mb-1">What Customers Say</p>
+                  <h2 className="text-xl md:text-2xl font-serif font-bold text-foreground">Customer Reviews</h2>
+                </div>
+                {(product.reviews ?? []).length > 0 && (() => {
+                  const avg = (product.reviews!.reduce((s, r) => s + r.rating, 0) / product.reviews!.length);
+                  return (
+                    <div className="text-right">
+                      <StarRating rating={avg} size={16} />
+                      <p className="text-[10px] font-sans text-muted-foreground mt-1">
+                        {avg.toFixed(1)} out of 5 · {product.reviews!.length} {product.reviews!.length === 1 ? "review" : "reviews"}
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Review list */}
+              {(product.reviews ?? []).length > 0 ? (
+                <div className="space-y-6 mb-10">
+                  {[...(product.reviews ?? [])].reverse().map((review) => (
+                    <div key={review.id} className="border-b border-border pb-6">
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div>
+                          <p className="text-sm font-sans font-semibold text-foreground">{review.name}</p>
+                          <StarRating rating={review.rating} size={11} />
+                        </div>
+                        <p className="text-[10px] font-sans text-muted-foreground shrink-0">
+                          {new Date(review.date).toLocaleDateString("en-PK", { year: "numeric", month: "short", day: "numeric" })}
+                        </p>
+                      </div>
+                      {review.text && <p className="text-sm font-sans text-muted-foreground leading-relaxed mt-2">{review.text}</p>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm font-sans text-muted-foreground mb-8">No reviews yet. Be the first to share your thoughts.</p>
+              )}
+
+              {/* Submit form */}
+              {reviewSubmitted ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="border border-border bg-card p-6 text-center"
+                >
+                  <Check className="w-5 h-5 text-green-500 mx-auto mb-2" />
+                  <p className="text-sm font-sans text-foreground font-semibold">Thank you for your review!</p>
+                  <p className="text-[11px] font-sans text-muted-foreground mt-1">Your feedback helps others make better choices.</p>
+                  <button
+                    onClick={() => setReviewSubmitted(false)}
+                    className="mt-4 text-[10px] tracking-ultra-wide uppercase font-sans text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Write Another Review
+                  </button>
+                </motion.div>
+              ) : (
+                <div className="border border-border p-6 space-y-5">
+                  <p className="text-[11px] tracking-ultra-wide uppercase font-sans text-muted-foreground">Write a Review</p>
+
+                  {/* Star selector */}
+                  <div>
+                    <p className="text-[10px] tracking-ultra-wide uppercase font-sans text-muted-foreground mb-2">Your Rating</p>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setReviewRating(i)}
+                          onMouseEnter={() => setHoverRating(i)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          className="p-0.5 transition-transform hover:scale-110"
+                        >
+                          <Star
+                            className={`w-6 h-6 transition-colors ${
+                              i <= (hoverRating || reviewRating)
+                                ? "fill-amber-400 text-amber-400"
+                                : "text-border"
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Name */}
+                  <div>
+                    <label className="text-[10px] tracking-ultra-wide uppercase font-sans text-muted-foreground block mb-1.5">Name</label>
+                    <input
+                      type="text"
+                      value={reviewName}
+                      onChange={(e) => setReviewName(e.target.value)}
+                      placeholder="Your name"
+                      className="w-full bg-transparent border border-border px-4 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground transition-colors"
+                    />
+                  </div>
+
+                  {/* Comment */}
+                  <div>
+                    <label className="text-[10px] tracking-ultra-wide uppercase font-sans text-muted-foreground block mb-1.5">
+                      Review <span className="text-muted-foreground/50">(optional)</span>
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                      placeholder="Share your experience with this product..."
+                      className="w-full bg-transparent border border-border px-4 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground transition-colors resize-none"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (!reviewName.trim() || !product) return;
+                      const review: ProductReview = {
+                        id: crypto.randomUUID(),
+                        name: reviewName.trim(),
+                        rating: reviewRating,
+                        text: reviewText.trim(),
+                        date: new Date().toISOString(),
+                      };
+                      addReview(product.id, review);
+                      setReviewName("");
+                      setReviewRating(5);
+                      setReviewText("");
+                      setReviewSubmitted(true);
+                    }}
+                    disabled={!reviewName.trim()}
+                    className="w-full py-3.5 bg-foreground text-background text-[11px] tracking-ultra-wide uppercase font-sans font-semibold hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Submit Review
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* ── Recommended For You ── */}
         {recommended.length > 0 && (
