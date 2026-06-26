@@ -188,27 +188,66 @@ export function useProducts() {
   useEffect(() => {
     const handler = () => setProducts(loadProducts());
     listeners.add(handler);
+
+    // Fetch from MongoDB
+    fetch("/.netlify/functions/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          saveProducts(data);
+          setProducts(data);
+        }
+      })
+      .catch((err) => console.error("Error fetching products from MongoDB:", err));
+
     return () => { listeners.delete(handler); };
   }, []);
 
-  const update = useCallback((updater: (prev: Product[]) => Product[]) => {
-    const next = updater(loadProducts());
+  const addProduct = useCallback((product: Product) => {
+    const current = loadProducts();
+    const next = [...current, product];
     saveProducts(next);
     setProducts(next);
     notify();
+
+    fetch("/.netlify/functions/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(product),
+    })
+      .then((res) => res.json())
+      .catch((err) => console.error("Error adding product to MongoDB:", err));
   }, []);
 
-  const addProduct = useCallback((product: Product) => {
-    update((prev) => [...prev, product]);
-  }, [update]);
-
   const updateProduct = useCallback((id: string, data: Partial<Product>) => {
-    update((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
-  }, [update]);
+    const current = loadProducts();
+    const next = current.map((p) => (p.id === id ? { ...p, ...data } : p));
+    saveProducts(next);
+    setProducts(next);
+    notify();
+
+    fetch(`/.netlify/functions/products?id=${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+      .then((res) => res.json())
+      .catch((err) => console.error("Error updating product in MongoDB:", err));
+  }, []);
 
   const deleteProduct = useCallback((id: string) => {
-    update((prev) => prev.filter((p) => p.id !== id));
-  }, [update]);
+    const current = loadProducts();
+    const next = current.filter((p) => p.id !== id);
+    saveProducts(next);
+    setProducts(next);
+    notify();
+
+    fetch(`/.netlify/functions/products?id=${id}`, {
+      method: "DELETE",
+    })
+      .then((res) => res.json())
+      .catch((err) => console.error("Error deleting product from MongoDB:", err));
+  }, []);
 
   const getByTag = useCallback(
     (tag: string) => products.filter((p) => p.tags.includes(tag)),

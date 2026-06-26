@@ -82,27 +82,61 @@ function load(): Order[] {
 const listeners = new Set<() => void>();
 function notify() { listeners.forEach((l) => l()); }
 
+function saveOrders(orders: Order[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+}
+
 export function useOrders() {
   const [orders, setOrders] = useState<Order[]>(load);
 
   useEffect(() => {
     const handler = () => setOrders(load());
     listeners.add(handler);
+
+    // Fetch from MongoDB
+    fetch("/.netlify/functions/orders")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          saveOrders(data);
+          setOrders(data);
+        }
+      })
+      .catch((err) => console.error("Error fetching orders from MongoDB:", err));
+
     return () => { listeners.delete(handler); };
   }, []);
 
   const updateStatus = useCallback((id: string, status: OrderStatus) => {
-    const next = load().map((o) => (o.id === id ? { ...o, status } : o));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    const current = load();
+    const next = current.map((o) => (o.id === id ? { ...o, status } : o));
+    saveOrders(next);
     setOrders(next);
     notify();
+
+    fetch(`/.netlify/functions/orders?id=${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    })
+      .then((res) => res.json())
+      .catch((err) => console.error("Error updating order status in MongoDB:", err));
   }, []);
 
   const addOrder = useCallback((order: Order) => {
-    const next = [order, ...load()];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    const current = load();
+    const next = [order, ...current];
+    saveOrders(next);
     setOrders(next);
     notify();
+
+    fetch("/.netlify/functions/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(order),
+    })
+      .then((res) => res.json())
+      .catch((err) => console.error("Error creating order in MongoDB:", err));
   }, []);
 
   return { orders, updateStatus, addOrder };

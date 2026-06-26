@@ -72,14 +72,41 @@ export function useHero() {
   useEffect(() => {
     const handler = () => setHero(loadHero());
     heroListeners.add(handler);
+
+    // Fetch from MongoDB
+    fetch("/.netlify/functions/hero")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data === "object" && !data.error) {
+          if (data.hero) {
+            localStorage.setItem(HERO_KEY, JSON.stringify(data.hero));
+            setHero(data.hero);
+          }
+          if (data.fabric) {
+            localStorage.setItem(FABRIC_KEY, JSON.stringify(data.fabric));
+            notifyFabric();
+          }
+        }
+      })
+      .catch((err) => console.error("Error fetching hero from MongoDB:", err));
+
     return () => { heroListeners.delete(handler); };
   }, []);
 
   const updateHero = useCallback((data: Partial<HeroData>) => {
-    const next = { ...loadHero(), ...data };
-    localStorage.setItem(HERO_KEY, JSON.stringify(next));
-    setHero(next);
+    const nextHero = { ...loadHero(), ...data };
+    localStorage.setItem(HERO_KEY, JSON.stringify(nextHero));
+    setHero(nextHero);
     notifyHero();
+
+    const currentFabric = loadFabric();
+    fetch("/.netlify/functions/hero", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hero: nextHero, fabric: currentFabric }),
+    })
+      .then((res) => res.json())
+      .catch((err) => console.error("Error saving hero to MongoDB:", err));
   }, []);
 
   return { hero, updateHero, defaultImage: heroDefault };
@@ -91,14 +118,41 @@ export function useFabric() {
   useEffect(() => {
     const handler = () => setFabric(loadFabric());
     fabricListeners.add(handler);
+
+    // Fetch from MongoDB
+    fetch("/.netlify/functions/hero")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data === "object" && !data.error) {
+          if (data.fabric) {
+            localStorage.setItem(FABRIC_KEY, JSON.stringify(data.fabric));
+            setFabric(data.fabric);
+          }
+          if (data.hero) {
+            localStorage.setItem(HERO_KEY, JSON.stringify(data.hero));
+            notifyHero();
+          }
+        }
+      })
+      .catch((err) => console.error("Error fetching fabric from MongoDB:", err));
+
     return () => { fabricListeners.delete(handler); };
   }, []);
 
   const updateFabric = useCallback((data: Partial<FabricData>) => {
-    const next = { ...loadFabric(), ...data };
-    localStorage.setItem(FABRIC_KEY, JSON.stringify(next));
-    setFabric(next);
+    const nextFabric = { ...loadFabric(), ...data };
+    localStorage.setItem(FABRIC_KEY, JSON.stringify(nextFabric));
+    setFabric(nextFabric);
     notifyFabric();
+
+    const currentHero = loadHero();
+    fetch("/.netlify/functions/hero", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hero: currentHero, fabric: nextFabric }),
+    })
+      .then((res) => res.json())
+      .catch((err) => console.error("Error saving fabric to MongoDB:", err));
   }, []);
 
   return { fabric, updateFabric, defaultImage: fabricDefault };

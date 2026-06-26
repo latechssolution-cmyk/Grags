@@ -34,37 +34,61 @@ function load(): SiteSettings {
 const listeners = new Set<() => void>();
 function notify() { listeners.forEach((l) => l()); }
 
+function saveSettings(settings: SiteSettings) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+}
+
 export function useSettings() {
   const [settings, setSettings] = useState<SiteSettings>(load);
 
   useEffect(() => {
     const handler = () => setSettings(load());
     listeners.add(handler);
+
+    // Fetch from MongoDB
+    fetch("/.netlify/functions/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data === "object" && !data.error) {
+          saveSettings(data);
+          setSettings(data);
+        }
+      })
+      .catch((err) => console.error("Error fetching settings from MongoDB:", err));
+
     return () => { listeners.delete(handler); };
+  }, []);
+
+  const saveAndSync = useCallback((next: SiteSettings) => {
+    saveSettings(next);
+    setSettings(next);
+    notify();
+
+    fetch("/.netlify/functions/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(next),
+    })
+      .then((res) => res.json())
+      .catch((err) => console.error("Error saving settings to MongoDB:", err));
   }, []);
 
   const updateSettings = useCallback((data: Partial<SiteSettings>) => {
     const next = { ...load(), ...data };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    setSettings(next);
-    notify();
-  }, []);
+    saveAndSync(next);
+  }, [saveAndSync]);
 
   const addCoupon = useCallback((coupon: CouponCode) => {
     const current = load();
     const next = { ...current, couponCodes: [...current.couponCodes, coupon] };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    setSettings(next);
-    notify();
-  }, []);
+    saveAndSync(next);
+  }, [saveAndSync]);
 
   const deleteCoupon = useCallback((id: string) => {
     const current = load();
     const next = { ...current, couponCodes: current.couponCodes.filter(c => c.id !== id) };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    setSettings(next);
-    notify();
-  }, []);
+    saveAndSync(next);
+  }, [saveAndSync]);
 
   const toggleCoupon = useCallback((id: string) => {
     const current = load();
@@ -72,10 +96,8 @@ export function useSettings() {
       ...current,
       couponCodes: current.couponCodes.map(c => c.id === id ? { ...c, active: !c.active } : c),
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    setSettings(next);
-    notify();
-  }, []);
+    saveAndSync(next);
+  }, [saveAndSync]);
 
   const applyCoupon = useCallback((code: string, subtotal: number): { valid: boolean; discount: number; message: string } => {
     const current = load();
