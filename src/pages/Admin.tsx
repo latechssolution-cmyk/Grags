@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen, LogOut, Eye, EyeOff, Lock } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen, LogOut, Eye, EyeOff, Lock, LayoutDashboard, TrendingUp, BarChart2, AlertTriangle } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import logo from "@/assets/logo.png";
 import { useProducts, Product, ColorVariant, generateProductCode } from "@/store/productStore";
 import { useHero, useFabric } from "@/store/heroStore";
@@ -15,6 +16,22 @@ const EMAILJS_PUBLIC_KEY  = "bNSf_ytdwdT2A38I8";
 
 const ALL_TAGS = ["NEW IN", "TOPS", "BOTTOMS", "ESSENTIALS", "HERITAGE"];
 const ORDER_STATUSES: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"];
+
+const PIE_COLORS: Record<string, string> = {
+  Pending: "#f59e0b",
+  Confirmed: "#3b82f6",
+  Shipped: "#8b5cf6",
+  Delivered: "#10b981",
+  Cancelled: "#ef4444",
+};
+
+const StatCard = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
+  <div className="border border-border bg-card p-5 space-y-1">
+    <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans">{label}</p>
+    <p className="text-2xl font-serif font-bold text-foreground">{value}</p>
+    {sub && <p className="text-[10px] text-muted-foreground font-sans">{sub}</p>}
+  </div>
+);
 
 // ─── Inject EmailJS SDK once ──────────────────────────────
 const initEmailJS = (): Promise<void> =>
@@ -553,7 +570,7 @@ const Admin = () => {
   const { orders, updateStatus } = useOrders();
   const { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, addCollection, updateCollection, deleteCollection } = useSettings();
 
-  const [tab, setTab] = useState<"products" | "hero" | "fabric" | "orders" | "coupons" | "collections" | "settings">("products");
+  const [tab, setTab] = useState<"dashboard" | "products" | "hero" | "fabric" | "orders" | "coupons" | "collections" | "settings">("dashboard");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [addingProduct, setAddingProduct] = useState(false);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
@@ -635,7 +652,29 @@ const Admin = () => {
 
   const availableCollections = (settings.collections ?? []).map((c) => c.name);
 
+  const stats = useMemo(() => {
+    const byStatus: Record<OrderStatus, number> = { Pending: 0, Confirmed: 0, Shipped: 0, Delivered: 0, Cancelled: 0 };
+    let revenue = 0;
+    const productCounts: Record<string, number> = {};
+    orders.forEach((o) => {
+      byStatus[o.status as OrderStatus] = (byStatus[o.status as OrderStatus] || 0) + 1;
+      if (o.status !== "Cancelled") revenue += (o.subtotal || 0) - (o.discount || 0);
+      o.products.forEach((p) => {
+        productCounts[p.name] = (productCounts[p.name] || 0) + p.quantity;
+      });
+    });
+    const productChart = Object.entries(productCounts)
+      .map(([name, count]) => ({ name: name.length > 18 ? name.slice(0, 16) + "…" : name, count }))
+      .sort((a, b) => b.count - a.count).slice(0, 6);
+    const statusChart = ORDER_STATUSES.map((s) => ({ name: s, value: byStatus[s] }));
+    const nonCancelled = orders.filter((o) => o.status !== "Cancelled");
+    const aov = nonCancelled.length > 0 ? Math.round(revenue / nonCancelled.length) : 0;
+    const itemsSold = nonCancelled.reduce((s, o) => s + o.products.reduce((a, p) => a + p.quantity, 0), 0);
+    return { byStatus, revenue, total: orders.length, productChart, statusChart, aov, itemsSold };
+  }, [orders]);
+
   const tabs = [
+    { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
     { id: "products" as const, label: "Products", icon: Package },
     { id: "hero" as const, label: "Hero", icon: Film },
     { id: "fabric" as const, label: "Fabric", icon: Image },
@@ -716,6 +755,101 @@ const Admin = () => {
             </button>
           ))}
         </div>
+
+        {/* ─── Dashboard ─── */}
+        {tab === "dashboard" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-8">
+            <h2 className="text-2xl font-serif font-bold text-foreground">Dashboard</h2>
+
+            {/* Row 1: Key metrics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <StatCard label="Total Orders" value={stats.total} />
+              <StatCard label="Revenue" value={`PKR ${stats.revenue.toLocaleString()}`} sub="Excl. cancelled" />
+              <StatCard label="Avg Order Value" value={`PKR ${stats.aov.toLocaleString()}`} />
+              <StatCard label="Items Sold" value={stats.itemsSold} />
+            </div>
+
+            {/* Row 2: Order status breakdown */}
+            <div>
+              <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans mb-3">Orders by Status</p>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {ORDER_STATUSES.map((s) => (
+                  <div key={s} className="border border-border bg-card p-4">
+                    <p className="text-[10px] tracking-ultra-wide uppercase font-sans mb-1" style={{ color: PIE_COLORS[s] }}>{s}</p>
+                    <p className="text-2xl font-serif font-bold text-foreground">{stats.byStatus[s]}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Row 3: Inventory & coupons */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <StatCard label="Total Products" value={products.length} />
+              <StatCard label="Active Coupons" value={settings.couponCodes.filter((c) => c.active).length} />
+              <div className="border border-border bg-card p-5 space-y-1">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                  <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans">Low Stock</p>
+                </div>
+                <p className="text-2xl font-serif font-bold text-foreground">
+                  {products.filter((p) => p.stock > 0 && p.stock <= 5).length}
+                </p>
+                <p className="text-[10px] text-muted-foreground font-sans">≤ 5 units remaining</p>
+                {products.filter((p) => p.stock > 0 && p.stock <= 5).length > 0 && (
+                  <div className="pt-2 space-y-1">
+                    {products.filter((p) => p.stock > 0 && p.stock <= 5).map((p) => (
+                      <p key={p.id} className="text-[10px] font-sans text-amber-400 truncate">{p.name} — {p.stock} left</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Row 4: Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="border border-border bg-card p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart2 className="w-3.5 h-3.5 text-muted-foreground" />
+                  <h3 className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans">Top Products by Units Sold</h3>
+                </div>
+                {stats.productChart.length === 0 ? (
+                  <p className="text-sm text-muted-foreground font-sans text-center py-16">No order data yet.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={stats.productChart} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                      <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }} interval={0} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} allowDecimals={false} />
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              <div className="border border-border bg-card p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+                  <h3 className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans">Order Status Distribution</h3>
+                </div>
+                {stats.total === 0 ? (
+                  <p className="text-sm text-muted-foreground font-sans text-center py-16">No order data yet.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <PieChart>
+                      <Pie data={stats.statusChart} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => percent > 0 ? `${name} ${(percent * 100).toFixed(0)}%` : ""} labelLine={false}>
+                        {stats.statusChart.map((entry) => (
+                          <Cell key={entry.name} fill={PIE_COLORS[entry.name] || "#888"} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* ─── Products ─── */}
         {tab === "products" && (
