@@ -15,7 +15,7 @@ const navLinks = [
   { label: "Bottoms", href: "/bottoms" },
   { label: "Essentials", href: "/essentials" },
   { label: "Heritage", href: "/heritage" },
-  { label: "Journals", href: null, modal: "journals" },
+  { label: "Journals", href: "/journal", modal: null },
   { label: "About Us", href: null, modal: "about" },
 ];
 

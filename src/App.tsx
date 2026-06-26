@@ -14,7 +14,8 @@ import NotFound from "./pages/NotFound";
 import CollectionPage from "./pages/CollectionPage";
 import ProductDetail from "./pages/ProductDetail";
 import CheckoutPage from "./pages/CheckoutPage";
-import { PrivacyPage, TermsPage, ContactPage, JournalPage } from "./pages/LegalPages";
+import { PrivacyPage, TermsPage, ContactPage } from "./pages/LegalPages";
+import JournalPage from "./pages/JournalPage";
 import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();

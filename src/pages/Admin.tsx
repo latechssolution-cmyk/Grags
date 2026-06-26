@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect, useCallback, type ElementType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen, LogOut, Eye, EyeOff, Lock, LayoutDashboard, TrendingUp, BarChart2, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen, LogOut, Eye, EyeOff, Lock, LayoutDashboard, TrendingUp, BarChart2, AlertTriangle, BookOpen, Globe } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import logo from "@/assets/logo.png";
 import { useProducts, Product, ColorVariant, generateProductCode } from "@/store/productStore";
 import { useHero, useFabric } from "@/store/heroStore";
 import { useOrders, OrderStatus } from "@/store/orderStore";
 import { useSettings, CouponCode, Collection } from "@/store/settingsStore";
+import { useJournal, JournalArticle } from "@/store/journalStore";
 import OrderDetailsModal from "@/components/OrderDetailsModal";
 import { Order } from "@/store/orderStore";
 
@@ -578,12 +579,28 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   const { fabric, updateFabric, defaultImage: fabricDefaultImage } = useFabric();
   const { orders, updateStatus } = useOrders();
   const { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, addCollection, updateCollection, deleteCollection } = useSettings();
+  const { articles, addArticle, updateArticle, deleteArticle } = useJournal();
 
-  const [tab, setTab] = useState<"dashboard" | "products" | "hero" | "fabric" | "orders" | "coupons" | "collections" | "settings">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "hero" | "fabric" | "orders" | "coupons" | "collections" | "journals" | "settings">("dashboard");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [addingProduct, setAddingProduct] = useState(false);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
   const [addingCollection, setAddingCollection] = useState(false);
+
+  // Journal state
+  const [addingArticle, setAddingArticle] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<JournalArticle | null>(null);
+  const emptyArticle = (): JournalArticle => ({
+    id: crypto.randomUUID(),
+    title: "",
+    excerpt: "",
+    content: "",
+    tag: "Craft",
+    date: new Date().toLocaleDateString("en-PK", { month: "long", year: "numeric" }),
+    published: true,
+    createdAt: new Date().toISOString(),
+  });
+  const [articleForm, setArticleForm] = useState<JournalArticle>(emptyArticle());
   const [collectionForm, setCollectionForm] = useState<Collection>({ id: "", name: "", title: "", subtitle: "", slug: "", imageUrl: "" });
   const [orderSearch, setOrderSearch] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>("ALL");
@@ -690,6 +707,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
     { id: "orders" as const, label: "Orders", icon: ShoppingCart },
     { id: "coupons" as const, label: "Coupons", icon: Tag },
     { id: "collections" as const, label: "Collections", icon: FolderOpen },
+    { id: "journals" as const, label: "Journals", icon: BookOpen },
     { id: "settings" as const, label: "Settings", icon: Settings },
   ];
 
@@ -1196,6 +1214,188 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
                 </div>
               ))}
             </div>
+          </motion.div>
+        )}
+
+        {/* ─── Journals ─── */}
+        {tab === "journals" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+            {!addingArticle && !editingArticle && (
+              <>
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-2xl font-serif font-bold text-foreground">Journal Articles</h2>
+                  <div className="flex items-center gap-3">
+                    <a
+                      href="/journal"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs tracking-ultra-wide uppercase font-sans text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Globe className="w-3 h-3" /> View Page
+                    </a>
+                    <button
+                      onClick={() => { setArticleForm(emptyArticle()); setAddingArticle(true); }}
+                      className="flex items-center gap-2 px-5 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity"
+                    >
+                      <Plus className="w-3 h-3" /> New Article
+                    </button>
+                  </div>
+                </div>
+
+                {articles.length === 0 ? (
+                  <p className="text-sm text-muted-foreground font-sans">No articles yet. Click "New Article" to write your first.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {articles.map((a) => (
+                      <div key={a.id} className="flex items-center gap-4 p-4 border border-border bg-card">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-[9px] tracking-ultra-wide uppercase font-sans border border-border px-1.5 py-0.5 text-muted-foreground">{a.tag}</span>
+                            <span className="text-[10px] font-sans text-muted-foreground">{a.date}</span>
+                            {!a.published && (
+                              <span className="text-[9px] tracking-ultra-wide uppercase font-sans text-amber-500 border border-amber-500/30 px-1.5 py-0.5">Draft</span>
+                            )}
+                          </div>
+                          <p className="text-sm font-sans font-medium text-foreground truncate">{a.title}</p>
+                          <p className="text-xs font-sans text-muted-foreground truncate mt-0.5">{a.excerpt}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => updateArticle(a.id, { published: !a.published })}
+                            title={a.published ? "Set as Draft" : "Publish"}
+                            className={`p-2 text-xs font-sans transition-colors ${a.published ? "text-green-500 hover:text-muted-foreground" : "text-muted-foreground hover:text-green-500"}`}
+                          >
+                            {a.published ? "● Live" : "○ Draft"}
+                          </button>
+                          <button
+                            onClick={() => { setArticleForm({ ...a }); setEditingArticle(a); }}
+                            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteArticle(a.id)}
+                            className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Add / Edit Form */}
+            {(addingArticle || editingArticle) && (
+              <div>
+                <h2 className="text-2xl font-serif font-bold text-foreground mb-6">
+                  {addingArticle ? "New Article" : "Edit Article"}
+                </h2>
+                <div className="space-y-5 max-w-2xl">
+                  {/* Title */}
+                  <div>
+                    <label className={labelCls}>Title</label>
+                    <input
+                      value={articleForm.title}
+                      onChange={(e) => setArticleForm((f) => ({ ...f, title: e.target.value }))}
+                      placeholder="e.g. The Anatomy of a Perfect Polo"
+                      className={inputCls}
+                    />
+                  </div>
+
+                  {/* Tag + Date */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelCls}>Tag</label>
+                      <select
+                        value={articleForm.tag}
+                        onChange={(e) => setArticleForm((f) => ({ ...f, tag: e.target.value }))}
+                        className={inputCls}
+                      >
+                        {["Craft", "Style", "Heritage", "Culture", "Behind the Brand"].map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Display Date</label>
+                      <input
+                        value={articleForm.date}
+                        onChange={(e) => setArticleForm((f) => ({ ...f, date: e.target.value }))}
+                        placeholder="e.g. June 2025"
+                        className={inputCls}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Excerpt */}
+                  <div>
+                    <label className={labelCls}>Excerpt</label>
+                    <p className="text-[10px] text-muted-foreground font-sans mb-1.5">Short summary shown on the journal listing page (1–2 sentences).</p>
+                    <textarea
+                      rows={2}
+                      value={articleForm.excerpt}
+                      onChange={(e) => setArticleForm((f) => ({ ...f, excerpt: e.target.value }))}
+                      placeholder="Every stitch tells a story..."
+                      className={`${inputCls} resize-none`}
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div>
+                    <label className={labelCls}>Full Article Content</label>
+                    <p className="text-[10px] text-muted-foreground font-sans mb-1.5">
+                      Supports basic formatting: use **bold text** and separate sections with a blank line. Section headings: start a paragraph with **Heading** on its own line.
+                    </p>
+                    <textarea
+                      rows={14}
+                      value={articleForm.content}
+                      onChange={(e) => setArticleForm((f) => ({ ...f, content: e.target.value }))}
+                      placeholder={"**Introduction**\n\nYour opening paragraph goes here.\n\n**Section Heading**\n\nSection content..."}
+                      className={`${inputCls} resize-y font-mono text-xs`}
+                    />
+                  </div>
+
+                  {/* Published toggle */}
+                  <label
+                    className="flex items-center gap-3 cursor-pointer"
+                    onClick={() => setArticleForm((f) => ({ ...f, published: !f.published }))}
+                  >
+                    <div className={`w-4 h-4 border flex-shrink-0 flex items-center justify-center ${articleForm.published ? "bg-foreground border-foreground" : "border-border"}`}>
+                      {articleForm.published && <div className="w-2 h-2 bg-background" />}
+                    </div>
+                    <span className="text-sm font-sans text-foreground">Publish immediately (visible on journal page)</span>
+                  </label>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      onClick={() => {
+                        if (!articleForm.title.trim()) return;
+                        if (addingArticle) {
+                          addArticle(articleForm);
+                          setAddingArticle(false);
+                        } else {
+                          updateArticle(editingArticle!.id, articleForm);
+                          setEditingArticle(null);
+                        }
+                      }}
+                      className="flex items-center gap-2 px-6 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity"
+                    >
+                      <Save className="w-3 h-3" /> {addingArticle ? "Publish Article" : "Save Changes"}
+                    </button>
+                    <button
+                      onClick={() => { setAddingArticle(false); setEditingArticle(null); }}
+                      className="px-5 py-2 border border-border text-muted-foreground text-xs tracking-ultra-wide uppercase font-sans hover:text-foreground transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 
