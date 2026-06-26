@@ -194,8 +194,23 @@ export function useProducts() {
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          saveProducts(data);
-          setProducts(data);
+          // Base64 image data URLs are too large to survive MongoDB reliably.
+          // Preserve images from localStorage when MongoDB returns empty fields.
+          const local = loadProducts();
+          const localById = Object.fromEntries(local.map((p) => [p.id, p]));
+          const merged = data.map((p) => {
+            const lp = localById[p.id];
+            return {
+              ...p,
+              image: p.image || lp?.image || "",
+              colorVariants: (p.colorVariants ?? []).map((v: ColorVariant, i: number) => ({
+                ...v,
+                image: v.image || lp?.colorVariants?.[i]?.image || "",
+              })),
+            };
+          });
+          saveProducts(merged);
+          setProducts(merged);
         }
       })
       .catch((err) => console.error("Error fetching products from MongoDB:", err));
