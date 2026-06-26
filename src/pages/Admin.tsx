@@ -567,6 +567,7 @@ const Admin = () => {
   const [fabricForm, setFabricForm] = useState(fabric);
   const [couponForm, setCouponForm] = useState({ code: "", discount: 0, type: "percentage" as "percentage" | "fixed" });
   const [whatsappNum, setWhatsappNum] = useState(settings.whatsappNumber);
+  const [contactEmail, setContactEmail] = useState(settings.contactEmail ?? "");
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   // Pre-load EmailJS SDK on mount
@@ -1025,10 +1026,15 @@ const Admin = () => {
             <h2 className="text-2xl font-serif font-bold text-foreground">Settings</h2>
             <div>
               <label className={labelCls}>WhatsApp Contact Number</label>
-              <p className="text-xs text-muted-foreground font-sans mb-2">Enter the number with country code, no + sign (e.g. 923049172098)</p>
+              <p className="text-xs text-muted-foreground font-sans mb-2">Enter with country code, no + sign (e.g. 923049172098)</p>
               <input value={whatsappNum} onChange={(e) => setWhatsappNum(e.target.value)} className={inputCls} placeholder="923049172098" />
             </div>
-            <button onClick={() => updateSettings({ whatsappNumber: whatsappNum })}
+            <div>
+              <label className={labelCls}>Contact Email</label>
+              <p className="text-xs text-muted-foreground font-sans mb-2">Shown on the Contact page and in the footer</p>
+              <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={inputCls} placeholder="support@graggs.com" />
+            </div>
+            <button onClick={() => updateSettings({ whatsappNumber: whatsappNum, contactEmail })}
               className="flex items-center gap-2 px-6 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity">
               <Save className="w-3 h-3" /> Save Settings
             </button>
