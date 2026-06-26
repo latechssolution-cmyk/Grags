@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useFabric } from "@/store/heroStore";
+import fabricDefault from "@/assets/fabric-closeup.jpg";
 
 const FabricSection = () => {
   const { fabric } = useFabric();
@@ -19,6 +20,7 @@ const FabricSection = () => {
           alt="Premium cotton fabric texture close-up"
           className="w-full h-full object-cover"
           loading="lazy"
+          onError={(e) => { e.currentTarget.src = fabricDefault; }}
         />
         {/* Darkened overlay for strong text contrast against the light fabric */}
         <div className="absolute inset-0 bg-black/50" />

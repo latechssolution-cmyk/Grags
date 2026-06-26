@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useHero } from "@/store/heroStore";
 
 const HeroSection = () => {
-  const { hero } = useHero();
+  const { hero, defaultImage } = useHero();
   const headingLines = hero.heading.split("\n");
 
   return (
@@ -28,6 +28,7 @@ const HeroSection = () => {
             alt="GRAGS premium menswear collection"
             className="w-full h-full object-cover object-center"
             loading="eager"
+            onError={(e) => { e.currentTarget.src = defaultImage; }}
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-charcoal/30 via-charcoal/10 to-charcoal/60" />

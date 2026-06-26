@@ -66,6 +66,13 @@ function notifyHero() { heroListeners.forEach((l) => l()); }
 const fabricListeners = new Set<() => void>();
 function notifyFabric() { fabricListeners.forEach((l) => l()); }
 
+// Vite hashes bundled assets on every build, making stored /assets/ paths stale.
+// Treat them as absent and fall back to the current bundled default.
+function resolveImage(url: string | undefined, fallback: string): string {
+  if (!url || url.startsWith("/assets/")) return fallback;
+  return url;
+}
+
 export function useHero() {
   const [hero, setHero] = useState<HeroData>(loadHero);
 
@@ -79,12 +86,12 @@ export function useHero() {
       .then((data) => {
         if (data && typeof data === "object" && !data.error) {
           if (data.hero) {
-            const merged = { ...data.hero, image: data.hero.image || loadHero().image };
+            const merged = { ...data.hero, image: resolveImage(data.hero.image, heroDefault) };
             localStorage.setItem(HERO_KEY, JSON.stringify(merged));
             setHero(merged);
           }
           if (data.fabric) {
-            const merged = { ...data.fabric, image: data.fabric.image || loadFabric().image };
+            const merged = { ...data.fabric, image: resolveImage(data.fabric.image, fabricDefault) };
             localStorage.setItem(FABRIC_KEY, JSON.stringify(merged));
             notifyFabric();
           }
@@ -127,12 +134,12 @@ export function useFabric() {
       .then((data) => {
         if (data && typeof data === "object" && !data.error) {
           if (data.fabric) {
-            const merged = { ...data.fabric, image: data.fabric.image || loadFabric().image };
+            const merged = { ...data.fabric, image: resolveImage(data.fabric.image, fabricDefault) };
             localStorage.setItem(FABRIC_KEY, JSON.stringify(merged));
             setFabric(merged);
           }
           if (data.hero) {
-            const merged = { ...data.hero, image: data.hero.image || loadHero().image };
+            const merged = { ...data.hero, image: resolveImage(data.hero.image, heroDefault) };
             localStorage.setItem(HERO_KEY, JSON.stringify(merged));
             notifyHero();
           }
