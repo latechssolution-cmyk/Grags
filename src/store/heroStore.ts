@@ -79,11 +79,13 @@ export function useHero() {
       .then((data) => {
         if (data && typeof data === "object" && !data.error) {
           if (data.hero) {
-            localStorage.setItem(HERO_KEY, JSON.stringify(data.hero));
-            setHero(data.hero);
+            const merged = { ...data.hero, image: data.hero.image || loadHero().image };
+            localStorage.setItem(HERO_KEY, JSON.stringify(merged));
+            setHero(merged);
           }
           if (data.fabric) {
-            localStorage.setItem(FABRIC_KEY, JSON.stringify(data.fabric));
+            const merged = { ...data.fabric, image: data.fabric.image || loadFabric().image };
+            localStorage.setItem(FABRIC_KEY, JSON.stringify(merged));
             notifyFabric();
           }
         }
@@ -125,11 +127,13 @@ export function useFabric() {
       .then((data) => {
         if (data && typeof data === "object" && !data.error) {
           if (data.fabric) {
-            localStorage.setItem(FABRIC_KEY, JSON.stringify(data.fabric));
-            setFabric(data.fabric);
+            const merged = { ...data.fabric, image: data.fabric.image || loadFabric().image };
+            localStorage.setItem(FABRIC_KEY, JSON.stringify(merged));
+            setFabric(merged);
           }
           if (data.hero) {
-            localStorage.setItem(HERO_KEY, JSON.stringify(data.hero));
+            const merged = { ...data.hero, image: data.hero.image || loadHero().image };
+            localStorage.setItem(HERO_KEY, JSON.stringify(merged));
             notifyHero();
           }
         }
