@@ -37,13 +37,13 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-xs text-white/50 tracking-widest uppercase">{label}</label>
+      <label className="text-xs text-foreground/50 tracking-widest uppercase">{label}</label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
-        className="w-full bg-white/5 border border-white/15 px-4 py-3 text-sm placeholder:text-white/20 focus:outline-none focus:border-white/40 transition-colors"
+        className="w-full bg-foreground/5 border border-foreground/15 px-4 py-3 text-sm placeholder:text-foreground/20 focus:outline-none focus:border-foreground/40 transition-colors"
       />
     </div>
   );
@@ -108,27 +108,27 @@ export default function CheckoutPage() {
 
   if (placed) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-sm"
         >
-          <CheckCircle size={48} className="text-green-400 mx-auto mb-6" />
+          <CheckCircle size={48} className="text-green-500 mx-auto mb-6" />
           <h1 className="text-2xl font-light tracking-widest uppercase mb-3">Order Placed</h1>
-          <p className="text-white/50 text-sm mb-2">Thank you for your order.</p>
-          <p className="text-xs text-white/30 mb-8">Order ID: {orderId}</p>
+          <p className="text-foreground/50 text-sm mb-2">Thank you for your order.</p>
+          <p className="text-xs text-foreground/30 mb-8">Order ID: {orderId}</p>
           {settings.contactEmail && (
-            <p className="text-xs text-white/30 mb-6">
+            <p className="text-xs text-foreground/30 mb-6">
               Questions? Email us at{" "}
-              <a href={`mailto:${settings.contactEmail}`} className="underline hover:text-white/60">
+              <a href={`mailto:${settings.contactEmail}`} className="underline hover:text-foreground/60">
                 {settings.contactEmail}
               </a>
             </p>
           )}
           <Link
             to="/"
-            className="inline-block bg-white text-black text-xs tracking-widest uppercase font-semibold px-8 py-3.5 hover:bg-white/90 transition-colors"
+            className="inline-block bg-foreground text-background text-xs tracking-widest uppercase font-semibold px-8 py-3.5 hover:bg-foreground/90 transition-colors"
           >
             Continue Shopping
           </Link>
@@ -139,11 +139,11 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center">
-          <ShoppingBag size={48} className="text-white/20 mx-auto mb-4" />
-          <p className="text-white/40 text-sm tracking-widest uppercase mb-6">Your cart is empty</p>
-          <Link to="/" className="text-xs tracking-widest underline hover:text-white/60 transition-colors">
+          <ShoppingBag size={48} className="text-foreground/20 mx-auto mb-4" />
+          <p className="text-foreground/40 text-sm tracking-widest uppercase mb-6">Your cart is empty</p>
+          <Link to="/" className="text-xs tracking-widest underline hover:text-foreground/60 transition-colors">
             Continue Shopping
           </Link>
         </div>
@@ -152,12 +152,12 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pt-20 pb-16">
+    <div className="min-h-screen bg-background text-foreground pt-20 pb-16">
       <div className="max-w-5xl mx-auto px-4">
         {/* Back */}
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-white/40 hover:text-white/80 transition-colors mb-10"
+          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-foreground/40 hover:text-foreground/80 transition-colors mb-10"
         >
           <ChevronLeft size={14} />
           Continue Shopping
@@ -171,7 +171,7 @@ export default function CheckoutPage() {
             <div className="space-y-10">
               {/* Contact */}
               <section className="space-y-4">
-                <h2 className="text-xs tracking-widest uppercase text-white/50 pb-2 border-b border-white/10">
+                <h2 className="text-xs tracking-widest uppercase text-foreground/50 pb-2 border-b border-foreground/10">
                   Contact Information
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -183,7 +183,7 @@ export default function CheckoutPage() {
 
               {/* Shipping Address */}
               <section className="space-y-4">
-                <h2 className="text-xs tracking-widest uppercase text-white/50 pb-2 border-b border-white/10">
+                <h2 className="text-xs tracking-widest uppercase text-foreground/50 pb-2 border-b border-foreground/10">
                   Shipping Address
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -197,7 +197,7 @@ export default function CheckoutPage() {
 
               {/* Shipping Method */}
               <section className="space-y-4">
-                <h2 className="text-xs tracking-widest uppercase text-white/50 pb-2 border-b border-white/10">
+                <h2 className="text-xs tracking-widest uppercase text-foreground/50 pb-2 border-b border-foreground/10">
                   Shipping Method
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -205,16 +205,16 @@ export default function CheckoutPage() {
                     <label
                       key={m}
                       className={`flex items-center justify-between border px-4 py-3.5 cursor-pointer transition-colors ${
-                        form.shippingMethod === m ? "border-white" : "border-white/15 hover:border-white/30"
+                        form.shippingMethod === m ? "border-foreground" : "border-foreground/15 hover:border-foreground/30"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${form.shippingMethod === m ? "border-white" : "border-white/30"}`}>
-                          {form.shippingMethod === m && <div className="w-2 h-2 rounded-full bg-white" />}
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${form.shippingMethod === m ? "border-foreground" : "border-foreground/30"}`}>
+                          {form.shippingMethod === m && <div className="w-2 h-2 rounded-full bg-foreground" />}
                         </div>
                         <span className="text-sm">{m}</span>
                       </div>
-                      <span className="text-sm text-white/60">PKR {SHIPPING_COST[m].toLocaleString()}</span>
+                      <span className="text-sm text-foreground/60">PKR {SHIPPING_COST[m].toLocaleString()}</span>
                       <input type="radio" className="sr-only" checked={form.shippingMethod === m} onChange={() => set("shippingMethod")(m)} />
                     </label>
                   ))}
@@ -223,7 +223,7 @@ export default function CheckoutPage() {
 
               {/* Payment */}
               <section className="space-y-4">
-                <h2 className="text-xs tracking-widest uppercase text-white/50 pb-2 border-b border-white/10">
+                <h2 className="text-xs tracking-widest uppercase text-foreground/50 pb-2 border-b border-foreground/10">
                   Payment Method
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -231,11 +231,11 @@ export default function CheckoutPage() {
                     <label
                       key={m}
                       className={`flex items-center gap-3 border px-4 py-3.5 cursor-pointer transition-colors ${
-                        form.paymentMethod === m ? "border-white" : "border-white/15 hover:border-white/30"
+                        form.paymentMethod === m ? "border-foreground" : "border-foreground/15 hover:border-foreground/30"
                       }`}
                     >
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${form.paymentMethod === m ? "border-white" : "border-white/30"}`}>
-                        {form.paymentMethod === m && <div className="w-2 h-2 rounded-full bg-white" />}
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${form.paymentMethod === m ? "border-foreground" : "border-foreground/30"}`}>
+                        {form.paymentMethod === m && <div className="w-2 h-2 rounded-full bg-foreground" />}
                       </div>
                       <span className="text-sm">{m}</span>
                       <input type="radio" className="sr-only" checked={form.paymentMethod === m} onChange={() => set("paymentMethod")(m)} />
@@ -247,11 +247,15 @@ export default function CheckoutPage() {
                 <label className="flex items-center gap-3 cursor-pointer mt-2">
                   <div
                     onClick={() => set("sameAsBilling")(!form.sameAsBilling)}
-                    className={`w-4 h-4 border flex items-center justify-center transition-colors cursor-pointer ${form.sameAsBilling ? "bg-white border-white" : "border-white/30"}`}
+                    className={`w-4 h-4 border flex items-center justify-center transition-colors cursor-pointer ${form.sameAsBilling ? "bg-foreground border-foreground" : "border-foreground/30"}`}
                   >
-                    {form.sameAsBilling && <svg viewBox="0 0 12 10" className="w-3 h-2.5 fill-black"><polyline points="1,5 4,9 11,1" strokeWidth="1.5" stroke="black" fill="none" /></svg>}
+                    {form.sameAsBilling && (
+                      <svg viewBox="0 0 12 10" className="w-3 h-2.5 text-background">
+                        <polyline points="1,5 4,9 11,1" strokeWidth="1.5" stroke="currentColor" fill="none" />
+                      </svg>
+                    )}
                   </div>
-                  <span className="text-sm text-white/60">Billing address same as shipping</span>
+                  <span className="text-sm text-foreground/60">Billing address same as shipping</span>
                 </label>
 
                 {!form.sameAsBilling && (
@@ -268,8 +272,8 @@ export default function CheckoutPage() {
 
             {/* Right — Summary */}
             <div className="space-y-6">
-              <div className="border border-white/10 p-6 space-y-5 sticky top-24">
-                <h2 className="text-xs tracking-widest uppercase text-white/50">Order Summary</h2>
+              <div className="border border-foreground/10 p-6 space-y-5 sticky top-24">
+                <h2 className="text-xs tracking-widest uppercase text-foreground/50">Order Summary</h2>
 
                 {/* Items */}
                 <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
@@ -280,7 +284,7 @@ export default function CheckoutPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm leading-snug truncate">{item.name}</p>
-                        <p className="text-xs text-white/40 mt-0.5">
+                        <p className="text-xs text-foreground/40 mt-0.5">
                           {item.color && `${item.color} · `}Size {item.size} · ×{item.quantity}
                         </p>
                         <p className="text-sm mt-1">{item.price}</p>
@@ -290,47 +294,47 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Coupon */}
-                <div className="pt-3 border-t border-white/10 space-y-2">
+                <div className="pt-3 border-t border-foreground/10 space-y-2">
                   <div className="flex gap-2">
                     <input
                       type="text"
                       placeholder="Coupon code"
                       value={couponInput}
                       onChange={(e) => { setCouponInput(e.target.value); setCouponResult(null); }}
-                      className="flex-1 bg-white/5 border border-white/15 px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-white/40 transition-colors"
+                      className="flex-1 bg-foreground/5 border border-foreground/15 px-3 py-2 text-sm placeholder:text-foreground/20 focus:outline-none focus:border-foreground/40 transition-colors"
                     />
                     <button
                       type="button"
                       onClick={handleApplyCoupon}
-                      className="px-3 border border-white/20 text-xs tracking-widest uppercase hover:border-white/50 transition-colors"
+                      className="px-3 border border-foreground/20 text-xs tracking-widest uppercase hover:border-foreground/50 transition-colors"
                     >
                       <Tag size={14} />
                     </button>
                   </div>
                   {couponResult && (
-                    <p className={`text-xs ${couponResult.valid ? "text-green-400" : "text-red-400"}`}>
+                    <p className={`text-xs ${couponResult.valid ? "text-green-600" : "text-red-500"}`}>
                       {couponResult.message}
                     </p>
                   )}
                 </div>
 
                 {/* Totals */}
-                <div className="space-y-2 pt-3 border-t border-white/10">
+                <div className="space-y-2 pt-3 border-t border-foreground/10">
                   <div className="flex justify-between text-sm">
-                    <span className="text-white/50">Subtotal</span>
+                    <span className="text-foreground/50">Subtotal</span>
                     <span>PKR {subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-white/50">Shipping</span>
+                    <span className="text-foreground/50">Shipping</span>
                     <span>PKR {shippingCost.toLocaleString()}</span>
                   </div>
                   {discount > 0 && (
-                    <div className="flex justify-between text-sm text-green-400">
+                    <div className="flex justify-between text-sm text-green-600">
                       <span>Discount</span>
                       <span>-PKR {discount.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between font-medium pt-2 border-t border-white/10">
+                  <div className="flex justify-between font-medium pt-2 border-t border-foreground/10">
                     <span>Total</span>
                     <span>PKR {total.toLocaleString()}</span>
                   </div>
@@ -338,7 +342,7 @@ export default function CheckoutPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-white text-black text-xs tracking-widest uppercase font-semibold py-4 hover:bg-white/90 transition-colors"
+                  className="w-full bg-foreground text-background text-xs tracking-widest uppercase font-semibold py-4 hover:bg-foreground/90 transition-colors"
                 >
                   Place Order
                 </button>

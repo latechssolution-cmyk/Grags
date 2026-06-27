@@ -23,21 +23,21 @@ export default function CartDrawer({ open, onClose }: Props) {
             onClick={onClose}
           />
           <motion.div
-            className="fixed right-0 top-0 h-full w-full max-w-sm bg-[#0a0a0a] border-l border-white/10 z-50 flex flex-col"
+            className="fixed right-0 top-0 h-full w-full max-w-sm bg-background border-l border-foreground/10 z-50 flex flex-col"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.3 }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-foreground/10">
               <div className="flex items-center gap-2">
                 <ShoppingBag size={18} />
                 <span className="text-sm font-medium tracking-widest uppercase">
                   Cart ({count})
                 </span>
               </div>
-              <button onClick={onClose} className="p-1 hover:text-white/60 transition-colors">
+              <button onClick={onClose} className="p-1 hover:text-foreground/60 transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -45,7 +45,7 @@ export default function CartDrawer({ open, onClose }: Props) {
             {/* Items */}
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
               {items.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 gap-3 text-white/40">
+                <div className="flex flex-col items-center justify-center h-48 gap-3 text-foreground/40">
                   <ShoppingBag size={36} />
                   <p className="text-sm tracking-widest uppercase">Your cart is empty</p>
                 </div>
@@ -64,27 +64,27 @@ export default function CartDrawer({ open, onClose }: Props) {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium leading-snug truncate">{item.name}</p>
-                      <p className="text-xs text-white/50 mt-0.5">
+                      <p className="text-xs text-foreground/50 mt-0.5">
                         {item.color && `${item.color} · `}Size {item.size}
                       </p>
                       <p className="text-sm mt-1">{item.price}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <button
                           onClick={() => updateQty(item.id, item.quantity - 1)}
-                          className="w-6 h-6 rounded border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors"
+                          className="w-6 h-6 rounded border border-foreground/20 flex items-center justify-center hover:border-foreground/60 transition-colors"
                         >
                           <Minus size={10} />
                         </button>
                         <span className="text-sm w-4 text-center">{item.quantity}</span>
                         <button
                           onClick={() => updateQty(item.id, item.quantity + 1)}
-                          className="w-6 h-6 rounded border border-white/20 flex items-center justify-center hover:border-white/60 transition-colors"
+                          className="w-6 h-6 rounded border border-foreground/20 flex items-center justify-center hover:border-foreground/60 transition-colors"
                         >
                           <Plus size={10} />
                         </button>
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="ml-auto text-white/30 hover:text-red-400 transition-colors"
+                          className="ml-auto text-foreground/30 hover:text-red-500 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -97,15 +97,15 @@ export default function CartDrawer({ open, onClose }: Props) {
 
             {/* Footer */}
             {items.length > 0 && (
-              <div className="px-6 py-5 border-t border-white/10 space-y-4">
+              <div className="px-6 py-5 border-t border-foreground/10 space-y-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-white/60 tracking-widest uppercase text-xs">Subtotal</span>
+                  <span className="text-foreground/60 tracking-widest uppercase text-xs">Subtotal</span>
                   <span className="font-medium">PKR {subtotal.toLocaleString()}</span>
                 </div>
                 <Link
                   to="/checkout"
                   onClick={onClose}
-                  className="block w-full text-center bg-white text-black text-xs tracking-widest uppercase font-semibold py-3.5 hover:bg-white/90 transition-colors"
+                  className="block w-full text-center bg-foreground text-background text-xs tracking-widest uppercase font-semibold py-3.5 hover:bg-foreground/90 transition-colors"
                 >
                   Checkout
                 </Link>

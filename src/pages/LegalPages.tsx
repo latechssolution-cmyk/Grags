@@ -6,18 +6,18 @@ import { useSettings } from "@/store/settingsStore";
 
 function PageLayout({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#050505] text-white pt-20 pb-20">
+    <div className="min-h-screen bg-background text-foreground pt-20 pb-20">
       <div className="max-w-2xl mx-auto px-6">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-white/40 hover:text-white/80 transition-colors mb-10"
+          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-foreground/40 hover:text-foreground/80 transition-colors mb-10"
         >
           <ChevronLeft size={14} />
           Back
         </Link>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <h1 className="text-3xl font-light tracking-widest uppercase mb-10">{title}</h1>
-          <div className="prose prose-sm prose-invert max-w-none space-y-6 text-white/70 leading-relaxed">
+          <div className="prose prose-sm max-w-none space-y-6 text-foreground/70 leading-relaxed">
             {children}
           </div>
         </motion.div>
@@ -27,11 +27,11 @@ function PageLayout({ title, children }: { title: string; children: ReactNode })
 }
 
 function H2({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-sm tracking-widest uppercase text-white mt-8 mb-3">{children}</h2>;
+  return <h2 className="text-sm tracking-widest uppercase text-foreground mt-8 mb-3">{children}</h2>;
 }
 
 function P({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm leading-7 text-white/60">{children}</p>;
+  return <p className="text-sm leading-7 text-foreground/60">{children}</p>;
 }
 
 export function PrivacyPage() {
@@ -102,11 +102,11 @@ export function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pt-20 pb-20">
+    <div className="min-h-screen bg-background text-foreground pt-20 pb-20">
       <div className="max-w-4xl mx-auto px-6">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-white/40 hover:text-white/80 transition-colors mb-10"
+          className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-foreground/40 hover:text-foreground/80 transition-colors mb-10"
         >
           <ChevronLeft size={14} />
           Back
@@ -116,16 +116,16 @@ export function ContactPage() {
           <div className="grid md:grid-cols-2 gap-12">
             {/* Info */}
             <div className="space-y-8">
-              <p className="text-sm text-white/60 leading-7">
+              <p className="text-sm text-foreground/60 leading-7">
                 We'd love to hear from you. Reach out with any questions, feedback, or enquiries.
               </p>
               <div className="space-y-5">
                 {settings.contactEmail && (
                   <div className="flex items-start gap-4">
-                    <Mail size={16} className="text-white/40 mt-0.5 shrink-0" />
+                    <Mail size={16} className="text-foreground/40 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-xs tracking-widest uppercase text-white/30 mb-1">Email</p>
-                      <a href={`mailto:${settings.contactEmail}`} className="text-sm hover:text-white/80 transition-colors">
+                      <p className="text-xs tracking-widest uppercase text-foreground/30 mb-1">Email</p>
+                      <a href={`mailto:${settings.contactEmail}`} className="text-sm hover:text-foreground/80 transition-colors">
                         {settings.contactEmail}
                       </a>
                     </div>
@@ -133,14 +133,14 @@ export function ContactPage() {
                 )}
                 {settings.whatsappNumber && (
                   <div className="flex items-start gap-4">
-                    <Phone size={16} className="text-white/40 mt-0.5 shrink-0" />
+                    <Phone size={16} className="text-foreground/40 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-xs tracking-widest uppercase text-white/30 mb-1">WhatsApp</p>
+                      <p className="text-xs tracking-widest uppercase text-foreground/30 mb-1">WhatsApp</p>
                       <a
                         href={`https://wa.me/${settings.whatsappNumber}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm hover:text-white/80 transition-colors"
+                        className="text-sm hover:text-foreground/80 transition-colors"
                       >
                         +{settings.whatsappNumber}
                       </a>
@@ -148,9 +148,9 @@ export function ContactPage() {
                   </div>
                 )}
                 <div className="flex items-start gap-4">
-                  <MapPin size={16} className="text-white/40 mt-0.5 shrink-0" />
+                  <MapPin size={16} className="text-foreground/40 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs tracking-widest uppercase text-white/30 mb-1">Location</p>
+                    <p className="text-xs tracking-widest uppercase text-foreground/30 mb-1">Location</p>
                     <p className="text-sm">Pakistan</p>
                   </div>
                 </div>
@@ -160,45 +160,45 @@ export function ContactPage() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-xs tracking-widest uppercase text-white/40 block mb-1.5">Name</label>
+                <label className="text-xs tracking-widest uppercase text-foreground/40 block mb-1.5">Name</label>
                 <input
                   type="text"
                   required
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full bg-white/5 border border-white/15 px-4 py-3 text-sm focus:outline-none focus:border-white/40 transition-colors"
+                  className="w-full bg-foreground/5 border border-foreground/15 px-4 py-3 text-sm focus:outline-none focus:border-foreground/40 transition-colors"
                 />
               </div>
               <div>
-                <label className="text-xs tracking-widest uppercase text-white/40 block mb-1.5">Email</label>
+                <label className="text-xs tracking-widest uppercase text-foreground/40 block mb-1.5">Email</label>
                 <input
                   type="email"
                   required
                   value={form.email}
                   onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  className="w-full bg-white/5 border border-white/15 px-4 py-3 text-sm focus:outline-none focus:border-white/40 transition-colors"
+                  className="w-full bg-foreground/5 border border-foreground/15 px-4 py-3 text-sm focus:outline-none focus:border-foreground/40 transition-colors"
                 />
               </div>
               <div>
-                <label className="text-xs tracking-widest uppercase text-white/40 block mb-1.5">Message</label>
+                <label className="text-xs tracking-widest uppercase text-foreground/40 block mb-1.5">Message</label>
                 <textarea
                   required
                   rows={5}
                   value={form.message}
                   onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-                  className="w-full bg-white/5 border border-white/15 px-4 py-3 text-sm focus:outline-none focus:border-white/40 transition-colors resize-none"
+                  className="w-full bg-foreground/5 border border-foreground/15 px-4 py-3 text-sm focus:outline-none focus:border-foreground/40 transition-colors resize-none"
                 />
               </div>
               {status === "success" && (
-                <p className="text-green-400 text-xs">Message sent successfully. We'll be in touch soon.</p>
+                <p className="text-green-600 text-xs">Message sent successfully. We'll be in touch soon.</p>
               )}
               {status === "error" && (
-                <p className="text-red-400 text-xs">Failed to send. Please try again or email us directly.</p>
+                <p className="text-red-500 text-xs">Failed to send. Please try again or email us directly.</p>
               )}
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="w-full bg-white text-black text-xs tracking-widest uppercase font-semibold py-3.5 hover:bg-white/90 transition-colors disabled:opacity-60"
+                className="w-full bg-foreground text-background text-xs tracking-widest uppercase font-semibold py-3.5 hover:bg-foreground/90 transition-colors disabled:opacity-60"
               >
                 {status === "loading" ? "Sending..." : "Send Message"}
               </button>
@@ -211,4 +211,3 @@ export function ContactPage() {
 }
 
 // JournalPage moved to src/pages/JournalPage.tsx
-

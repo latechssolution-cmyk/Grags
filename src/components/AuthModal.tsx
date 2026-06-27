@@ -42,13 +42,13 @@ export default function AuthModal({ open, onClose }: Props) {
         placeholder={placeholder}
         value={form[key]}
         onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-        className="w-full bg-white/5 border border-white/15 px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-white/40 transition-colors"
+        className="w-full bg-foreground/5 border border-foreground/15 px-4 py-3 text-sm placeholder:text-foreground/30 focus:outline-none focus:border-foreground/40 transition-colors"
       />
       {key === "password" && (
         <button
           type="button"
           onClick={() => setShowPw((s) => !s)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground/60"
         >
           {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
@@ -74,26 +74,26 @@ export default function AuthModal({ open, onClose }: Props) {
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="bg-[#0a0a0a] border border-white/10 w-full max-w-sm p-8 relative">
+            <div className="bg-background border border-foreground/10 w-full max-w-sm p-8 relative">
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 text-white/30 hover:text-white/60 transition-colors"
+                className="absolute top-4 right-4 text-foreground/30 hover:text-foreground/60 transition-colors"
               >
                 <X size={18} />
               </button>
 
               {user ? (
                 <div className="text-center space-y-5">
-                  <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mx-auto">
+                  <div className="w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center mx-auto">
                     <User size={24} />
                   </div>
                   <div>
                     <p className="text-sm tracking-widest uppercase">{user.username}</p>
-                    {user.email && <p className="text-xs text-white/40 mt-1">{user.email}</p>}
+                    {user.email && <p className="text-xs text-foreground/40 mt-1">{user.email}</p>}
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full border border-white/20 py-3 text-xs tracking-widest uppercase hover:border-white/60 transition-colors"
+                    className="w-full border border-foreground/20 py-3 text-xs tracking-widest uppercase hover:border-foreground/60 transition-colors"
                   >
                     Sign Out
                   </button>
@@ -111,21 +111,21 @@ export default function AuthModal({ open, onClose }: Props) {
                     {mode === "signup" && field("email", "Email", "email")}
                     {field("password", "Password")}
 
-                    {error && <p className="text-red-400 text-xs">{error}</p>}
+                    {error && <p className="text-red-500 text-xs">{error}</p>}
 
                     <button
                       type="submit"
-                      className="w-full bg-white text-black text-xs tracking-widest uppercase font-semibold py-3.5 hover:bg-white/90 transition-colors mt-2"
+                      className="w-full bg-foreground text-background text-xs tracking-widest uppercase font-semibold py-3.5 hover:bg-foreground/90 transition-colors mt-2"
                     >
                       {mode === "login" ? "Sign In" : "Create Account"}
                     </button>
                   </form>
 
-                  <p className="text-center text-xs text-white/40 mt-5">
+                  <p className="text-center text-xs text-foreground/40 mt-5">
                     {mode === "login" ? "Don't have an account? " : "Already have an account? "}
                     <button
                       onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); }}
-                      className="text-white/70 hover:text-white underline transition-colors"
+                      className="text-foreground/70 hover:text-foreground underline transition-colors"
                     >
                       {mode === "login" ? "Sign Up" : "Sign In"}
                     </button>
