@@ -6,7 +6,7 @@ import logo from "@/assets/logo.png";
 import { useProducts, Product, ColorVariant, generateProductCode } from "@/store/productStore";
 import { useHero, useFabric } from "@/store/heroStore";
 import { useOrders, OrderStatus } from "@/store/orderStore";
-import { useSettings, CouponCode, Collection } from "@/store/settingsStore";
+import { useSettings, CouponCode, Collection, SizeChart } from "@/store/settingsStore";
 import { useJournal, JournalArticle } from "@/store/journalStore";
 import OrderDetailsModal from "@/components/OrderDetailsModal";
 import { Order } from "@/store/orderStore";
@@ -15,7 +15,8 @@ const EMAILJS_SERVICE_ID  = "service_lzhp8t6";
 const EMAILJS_TEMPLATE_ID = "template_mq2zq75";
 const EMAILJS_PUBLIC_KEY  = "bNSf_ytdwdT2A38I8";
 
-const ALL_TAGS = ["NEW IN", "TOPS", "BOTTOMS", "ESSENTIALS", "HERITAGE"];
+const ALL_TAGS = ["NEW IN", "SUMMER", "WINTER", "TOPS", "BOTTOMS", "ESSENTIALS", "HERITAGE"];
+const PREDEFINED_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const ORDER_STATUSES: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"];
 
 const PIE_COLORS: Record<string, string> = {
@@ -191,6 +192,7 @@ const ProductForm = ({
     }
   );
   const [sizeInput, setSizeInput] = useState("");
+  const [sizeMode, setSizeMode] = useState<"predefined" | "custom">("predefined");
   const [careInput, setCareInput] = useState((initial?.careInstructions ?? []).join("\n"));
   const [newVariant, setNewVariant] = useState<ColorVariant>({ name: "", hex: "#1a1a1a", image: "" });
 
@@ -244,17 +246,53 @@ const ProductForm = ({
       </div>
       <div>
         <label className={labelCls}>Sizes</label>
-        <div className="flex flex-wrap gap-2 mb-2">
-          {form.sizes.map((s, i) => (
-            <span key={i} className="px-2 py-1 text-[10px] tracking-ultra-wide uppercase font-sans bg-secondary text-foreground border border-border flex items-center gap-1">
-              {s}<button onClick={() => setForm((f) => ({ ...f, sizes: f.sizes.filter((_, idx) => idx !== i) }))}><X className="w-3 h-3" /></button>
-            </span>
-          ))}
+        {/* Mode toggle */}
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => setSizeMode("predefined")}
+            className={`px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans border transition-colors ${sizeMode === "predefined" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:border-foreground"}`}
+          >
+            S / M / L / XL
+          </button>
+          <button
+            onClick={() => setSizeMode("custom")}
+            className={`px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans border transition-colors ${sizeMode === "custom" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:border-foreground"}`}
+          >
+            Custom
+          </button>
         </div>
-        <div className="flex gap-2">
-          <input value={sizeInput} onChange={(e) => setSizeInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addSize()} placeholder="Add size" className={`flex-1 ${inputCls}`} />
-          <button onClick={addSize} className="px-3 py-1 bg-foreground text-background text-xs font-sans">Add</button>
-        </div>
+        {sizeMode === "predefined" ? (
+          <div className="flex flex-wrap gap-2">
+            {PREDEFINED_SIZES.map((s) => (
+              <button
+                key={s}
+                onClick={() =>
+                  setForm((f) => ({
+                    ...f,
+                    sizes: f.sizes.includes(s) ? f.sizes.filter((x) => x !== s) : [...f.sizes, s],
+                  }))
+                }
+                className={`w-12 h-10 text-xs font-sans font-semibold border transition-colors ${form.sizes.includes(s) ? "bg-foreground text-background border-foreground" : "bg-transparent text-muted-foreground border-border hover:border-foreground"}`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {form.sizes.map((s, i) => (
+                <span key={i} className="px-2 py-1 text-[10px] tracking-ultra-wide uppercase font-sans bg-secondary text-foreground border border-border flex items-center gap-1">
+                  {s}<button onClick={() => setForm((f) => ({ ...f, sizes: f.sizes.filter((_, idx) => idx !== i) }))}><X className="w-3 h-3" /></button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input value={sizeInput} onChange={(e) => setSizeInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addSize()} placeholder="e.g. 32×32 or One Size" className={`flex-1 ${inputCls}`} />
+              <button onClick={addSize} className="px-3 py-1 bg-foreground text-background text-xs font-sans">Add</button>
+            </div>
+          </>
+        )}
       </div>
       <div>
         <label className={labelCls}>Default Image</label>
@@ -599,6 +637,9 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
     date: new Date().toLocaleDateString("en-PK", { month: "long", year: "numeric" }),
     published: true,
     createdAt: new Date().toISOString(),
+    coverImage: "",
+    link: "",
+    keywords: [],
   });
   const [articleForm, setArticleForm] = useState<JournalArticle>(emptyArticle());
   const [collectionForm, setCollectionForm] = useState<Collection>({ id: "", name: "", title: "", subtitle: "", slug: "", imageUrl: "" });
@@ -611,6 +652,18 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   const [couponForm, setCouponForm] = useState({ code: "", discount: 0, type: "percentage" as "percentage" | "fixed" });
   const [whatsappNum, setWhatsappNum] = useState(settings.whatsappNumber);
   const [contactEmail, setContactEmail] = useState(settings.contactEmail ?? "");
+  const [senderEmail, setSenderEmail] = useState(settings.senderEmail ?? "");
+  const [storeLocation, setStoreLocation] = useState(settings.storeLocation ?? "");
+  const [googleMapsUrl, setGoogleMapsUrl] = useState(settings.googleMapsUrl ?? "");
+  const [sizeChart, setSizeChart] = useState<SizeChart>(settings.sizeChart ?? {
+    headers: ["Size", "Chest (inches)", "Length (inches)", "Shoulder (inches)"],
+    rows: [
+      { size: "S",  values: ["36–38", "28", "17"] },
+      { size: "M",  values: ["38–40", "29", "17.5"] },
+      { size: "L",  values: ["40–42", "30", "18"] },
+      { size: "XL", values: ["42–44", "31", "18.5"] },
+    ],
+  });
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   // Pre-load EmailJS SDK on mount
@@ -1359,6 +1412,47 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
                     />
                   </div>
 
+                  {/* Cover Image URL */}
+                  <div>
+                    <label className={labelCls}>Cover Image URL</label>
+                    <p className="text-[10px] text-muted-foreground font-sans mb-1.5">Paste a direct image URL to use as the article header image.</p>
+                    <input
+                      value={articleForm.coverImage ?? ""}
+                      onChange={(e) => setArticleForm((f) => ({ ...f, coverImage: e.target.value }))}
+                      placeholder="https://example.com/image.jpg"
+                      className={inputCls}
+                    />
+                  </div>
+
+                  {/* External Link */}
+                  <div>
+                    <label className={labelCls}>External Link / URL</label>
+                    <p className="text-[10px] text-muted-foreground font-sans mb-1.5">Optional — a "Read More" button will appear linking to this URL.</p>
+                    <input
+                      value={articleForm.link ?? ""}
+                      onChange={(e) => setArticleForm((f) => ({ ...f, link: e.target.value }))}
+                      placeholder="https://..."
+                      className={inputCls}
+                    />
+                  </div>
+
+                  {/* Keywords */}
+                  <div>
+                    <label className={labelCls}>Keywords</label>
+                    <p className="text-[10px] text-muted-foreground font-sans mb-1.5">Comma-separated tags shown on the article (e.g. polo, fabric, summer).</p>
+                    <input
+                      value={(articleForm.keywords ?? []).join(", ")}
+                      onChange={(e) =>
+                        setArticleForm((f) => ({
+                          ...f,
+                          keywords: e.target.value.split(",").map((k) => k.trim()).filter(Boolean),
+                        }))
+                      }
+                      placeholder="polo, craftsmanship, summer"
+                      className={inputCls}
+                    />
+                  </div>
+
                   {/* Published toggle */}
                   <label
                     className="flex items-center gap-3 cursor-pointer"
@@ -1404,18 +1498,119 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
         {tab === "settings" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-6">
             <h2 className="text-2xl font-serif font-bold text-foreground">Settings</h2>
-            <div>
-              <label className={labelCls}>WhatsApp Contact Number</label>
-              <p className="text-xs text-muted-foreground font-sans mb-2">Enter with country code, no + sign (e.g. 923049172098)</p>
-              <input value={whatsappNum} onChange={(e) => setWhatsappNum(e.target.value)} className={inputCls} placeholder="923049172098" />
+
+            {/* Contact */}
+            <div className="space-y-4 border border-border p-5">
+              <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Contact & Communication</p>
+              <div>
+                <label className={labelCls}>WhatsApp Contact Number</label>
+                <p className="text-xs text-muted-foreground font-sans mb-2">Enter with country code, no + sign (e.g. 923049172098)</p>
+                <input value={whatsappNum} onChange={(e) => setWhatsappNum(e.target.value)} className={inputCls} placeholder="923049172098" />
+              </div>
+              <div>
+                <label className={labelCls}>Contact Email</label>
+                <p className="text-xs text-muted-foreground font-sans mb-2">Shown on the Contact page and in the footer</p>
+                <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={inputCls} placeholder="support@grags.com" />
+              </div>
+              <div>
+                <label className={labelCls}>Sender Email</label>
+                <p className="text-xs text-muted-foreground font-sans mb-2">The email address customers receive order status notifications from</p>
+                <input type="email" value={senderEmail} onChange={(e) => setSenderEmail(e.target.value)} className={inputCls} placeholder="orders@grags.com" />
+              </div>
             </div>
-            <div>
-              <label className={labelCls}>Contact Email</label>
-              <p className="text-xs text-muted-foreground font-sans mb-2">Shown on the Contact page and in the footer</p>
-              <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={inputCls} placeholder="support@grags.com" />
+
+            {/* Store Location */}
+            <div className="space-y-4 border border-border p-5">
+              <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Store Location</p>
+              <div>
+                <label className={labelCls}>Store Address</label>
+                <p className="text-xs text-muted-foreground font-sans mb-2">Displayed in the footer and About section</p>
+                <input value={storeLocation} onChange={(e) => setStoreLocation(e.target.value)} className={inputCls} placeholder="e.g. 12 Liberty Market, Lahore, Pakistan" />
+              </div>
+              <div>
+                <label className={labelCls}>Google Maps URL</label>
+                <p className="text-xs text-muted-foreground font-sans mb-2">Paste the full Google Maps share link — clicking the address in the footer opens it in a new tab</p>
+                <input value={googleMapsUrl} onChange={(e) => setGoogleMapsUrl(e.target.value)} className={inputCls} placeholder="https://maps.google.com/..." />
+                {googleMapsUrl && (
+                  <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-xs text-muted-foreground underline hover:text-foreground transition-colors">
+                    Preview map link ↗
+                  </a>
+                )}
+              </div>
             </div>
-            <button onClick={() => updateSettings({ whatsappNumber: whatsappNum, contactEmail })}
-              className="flex items-center gap-2 px-6 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity">
+
+            {/* Size Chart */}
+            <div className="space-y-4 border border-border p-5">
+              <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Size Chart</p>
+              <p className="text-xs text-muted-foreground font-sans">Edit the size guide shown on product pages. First column is always "Size".</p>
+
+              {/* Headers */}
+              <div>
+                <label className={labelCls}>Column Headers (comma-separated)</label>
+                <input
+                  value={sizeChart.headers.join(", ")}
+                  onChange={(e) => {
+                    const headers = e.target.value.split(",").map((h) => h.trim()).filter(Boolean);
+                    setSizeChart((sc) => ({
+                      ...sc,
+                      headers,
+                      rows: sc.rows.map((row) => ({
+                        ...row,
+                        values: headers.slice(1).map((_, i) => row.values[i] ?? ""),
+                      })),
+                    }));
+                  }}
+                  className={inputCls}
+                  placeholder="Size, Chest (inches), Length (inches), Shoulder (inches)"
+                />
+              </div>
+
+              {/* Rows */}
+              <div className="space-y-2">
+                {sizeChart.rows.map((row, ri) => (
+                  <div key={ri} className="flex items-center gap-2">
+                    <input
+                      value={row.size}
+                      onChange={(e) => setSizeChart((sc) => ({ ...sc, rows: sc.rows.map((r, i) => i === ri ? { ...r, size: e.target.value } : r) }))}
+                      placeholder="Size"
+                      className={`w-16 ${inputCls}`}
+                    />
+                    {sizeChart.headers.slice(1).map((_, ci) => (
+                      <input
+                        key={ci}
+                        value={row.values[ci] ?? ""}
+                        onChange={(e) => setSizeChart((sc) => ({
+                          ...sc,
+                          rows: sc.rows.map((r, i) => i === ri ? { ...r, values: r.values.map((v, vi) => vi === ci ? e.target.value : v) } : r),
+                        }))}
+                        placeholder={sizeChart.headers[ci + 1]}
+                        className={`flex-1 ${inputCls}`}
+                      />
+                    ))}
+                    <button
+                      onClick={() => setSizeChart((sc) => ({ ...sc, rows: sc.rows.filter((_, i) => i !== ri) }))}
+                      className="text-muted-foreground hover:text-destructive transition-colors p-1 flex-shrink-0"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => setSizeChart((sc) => ({
+                    ...sc,
+                    rows: [...sc.rows, { size: "", values: sc.headers.slice(1).map(() => "") }],
+                  }))}
+                  className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors mt-1"
+                >
+                  <Plus className="w-3 h-3" /> Add Row
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => updateSettings({ whatsappNumber: whatsappNum, contactEmail, senderEmail, storeLocation, googleMapsUrl, sizeChart })}
+              className="flex items-center gap-2 px-6 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity"
+            >
               <Save className="w-3 h-3" /> Save Settings
             </button>
           </motion.div>

@@ -537,13 +537,6 @@ const ProductDetail = () => {
               </motion.p>
             )}
 
-            {/* Stock */}
-            <p className="text-[10px] font-sans text-muted-foreground tracking-wide">
-              {product.stock > 0
-                ? `${product.stock} in stock — order soon`
-                : "Out of stock"}
-            </p>
-
             {/* Description */}
             {product.description && (
               <div className="text-sm font-sans text-muted-foreground leading-relaxed border-t border-border pt-4">
@@ -580,7 +573,7 @@ const ProductDetail = () => {
                 disabled={product.stock === 0}
                 className="w-full py-3 border border-foreground text-foreground text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-foreground hover:text-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
               >
-                {product.stock > 0 ? "Book Now" : "Out of Stock"}
+                {product.stock > 0 ? "Reserve / Book" : "Out of Stock"}
               </button>
             </div>
 

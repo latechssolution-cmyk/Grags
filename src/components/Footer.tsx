@@ -3,6 +3,8 @@ import { useSettings } from "@/store/settingsStore";
 
 const shopLinks = [
   { label: "New In", href: "/new-in" },
+  { label: "Summer", href: "/summer" },
+  { label: "Winter", href: "/winter" },
   { label: "Tops", href: "/tops" },
   { label: "Bottoms", href: "/bottoms" },
   { label: "Essentials", href: "/essentials" },
@@ -49,6 +51,22 @@ const Footer = () => {
               >
                 {settings.contactEmail}
               </a>
+            )}
+            {settings.storeLocation && (
+              settings.googleMapsUrl ? (
+                <a
+                  href={settings.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors leading-relaxed"
+                >
+                  📍 {settings.storeLocation}
+                </a>
+              ) : (
+                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+                  📍 {settings.storeLocation}
+                </p>
+              )
             )}
           </div>
 

@@ -16,6 +16,8 @@ import ProductDetail from "./pages/ProductDetail";
 import CheckoutPage from "./pages/CheckoutPage";
 import { PrivacyPage, TermsPage, ContactPage } from "./pages/LegalPages";
 import JournalPage from "./pages/JournalPage";
+import Summer from "./pages/Summer";
+import Winter from "./pages/Winter";
 import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/new-in" element={<NewIn />} />
+          <Route path="/summer" element={<Summer />} />
+          <Route path="/winter" element={<Winter />} />
           <Route path="/tops" element={<Tops />} />
           <Route path="/bottoms" element={<Bottoms />} />
           <Route path="/essentials" element={<Essentials />} />

@@ -54,7 +54,7 @@ export const ProductCard = ({ product, index, onBook }: ProductCardProps) => {
             onClick={() => onBook(product, selectedVariant)}
             className="w-full py-3 bg-primary text-primary-foreground text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-primary/90 transition-colors duration-300"
           >
-            Book Now
+            Add to Cart
           </button>
         </div>
 

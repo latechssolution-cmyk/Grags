@@ -9,6 +9,9 @@ export interface JournalArticle {
   date: string;
   published: boolean;
   createdAt: string;
+  coverImage?: string;
+  link?: string;
+  keywords?: string[];
 }
 
 const defaultArticles: JournalArticle[] = [

@@ -83,6 +83,15 @@ const ArticleReader = ({ article, onClose }: { article: JournalArticle; onClose:
           {article.title}
         </h1>
 
+        {/* Cover image */}
+        {article.coverImage && (
+          <img
+            src={article.coverImage}
+            alt={article.title}
+            className="w-full aspect-[16/7] object-cover mb-6"
+          />
+        )}
+
         <div className="h-px bg-border mb-8" />
 
         {/* Content */}
@@ -90,9 +99,32 @@ const ArticleReader = ({ article, onClose }: { article: JournalArticle; onClose:
           {renderContent(article.content || article.excerpt)}
         </div>
 
+        {/* Keywords */}
+        {(article.keywords ?? []).length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-8 pt-6 border-t border-border">
+            {(article.keywords ?? []).map((kw) => (
+              <span key={kw} className="text-[9px] tracking-ultra-wide uppercase font-sans border border-border px-2 py-0.5 text-muted-foreground">
+                {kw}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* External link */}
+        {article.link && (
+          <a
+            href={article.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 inline-flex items-center gap-1.5 text-[10px] tracking-ultra-wide uppercase font-sans text-foreground border border-foreground px-4 py-2 hover:bg-foreground hover:text-background transition-colors"
+          >
+            Read More ↗
+          </a>
+        )}
+
         <button
           onClick={onClose}
-          className="mt-10 flex items-center gap-1.5 text-[10px] tracking-ultra-wide uppercase font-sans text-muted-foreground hover:text-foreground transition-colors"
+          className="mt-8 flex items-center gap-1.5 text-[10px] tracking-ultra-wide uppercase font-sans text-muted-foreground hover:text-foreground transition-colors"
         >
           <ChevronLeft className="w-3 h-3" /> Back to Journal
         </button>
@@ -204,8 +236,11 @@ const JournalPage = () => {
                     </p>
                   </div>
 
-                  {/* Arrow */}
-                  <div className="flex-shrink-0 pt-1">
+                  {/* Cover image thumbnail or arrow */}
+                  <div className="flex-shrink-0 pt-1 flex items-center gap-3">
+                    {article.coverImage && (
+                      <img src={article.coverImage} alt="" className="w-16 h-16 object-cover hidden sm:block opacity-80 group-hover:opacity-100 transition-opacity" />
+                    )}
                     <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all duration-200" />
                   </div>
                 </div>

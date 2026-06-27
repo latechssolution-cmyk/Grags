@@ -11,6 +11,8 @@ import logo from "@/assets/logo.png";
 
 const navLinks = [
   { label: "New In", href: "/new-in" },
+  { label: "Summer", href: "/summer" },
+  { label: "Winter", href: "/winter" },
   { label: "Tops", href: "/tops" },
   { label: "Bottoms", href: "/bottoms" },
   { label: "Essentials", href: "/essentials" },
