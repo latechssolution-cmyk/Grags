@@ -1,3 +1,5 @@
+const { Resend } = require("resend");
+
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
@@ -21,29 +23,23 @@ exports.handler = async (event) => {
 
   try {
     const { to, subject, html } = JSON.parse(event.body);
+    const resend = new Resend(RESEND_API_KEY);
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "GRAGS <onboarding@resend.dev>",
-        to,
-        subject,
-        html,
-      }),
+    const { data, error } = await resend.emails.send({
+      from: "GRAGS <onboarding@resend.dev>",
+      to,
+      subject,
+      html,
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      return { statusCode: res.status, headers, body: JSON.stringify({ error: data }) };
+    if (error) {
+      console.error("Resend error:", error);
+      return { statusCode: 400, headers, body: JSON.stringify({ error }) };
     }
 
     return { statusCode: 200, headers, body: JSON.stringify({ success: true, id: data.id }) };
   } catch (err) {
+    console.error("send-email error:", err);
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };
