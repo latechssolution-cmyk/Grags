@@ -333,7 +333,7 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
             <img
               src={logo}
               alt="GRAGS"
-              className="h-5 md:h-6 w-auto object-contain"
+              className="h-5 md:h-6 w-auto object-contain dark:invert"
             />
           </Link>
 

@@ -36,7 +36,7 @@ const HeroSection = () => {
 
       <div className="relative z-10 flex flex-col items-center justify-end h-full pb-20 md:pb-28 px-6 text-center">
         <motion.p
-          className="text-xs md:text-sm tracking-mega-wide uppercase text-charcoal-foreground/80 font-sans mb-4"
+          className="text-xs md:text-sm tracking-mega-wide uppercase text-white/80 font-sans mb-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.7 }}
@@ -44,7 +44,7 @@ const HeroSection = () => {
           {hero.subheading}
         </motion.p>
         <motion.h2
-          className="text-4xl md:text-7xl lg:text-8xl font-serif font-bold text-charcoal-foreground leading-none mb-6"
+          className="text-4xl md:text-7xl lg:text-8xl font-serif font-bold text-white leading-none mb-6"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
@@ -58,7 +58,7 @@ const HeroSection = () => {
         </motion.h2>
         <motion.a
           href={hero.buttonLink}
-          className="btn-trace px-10 py-4 bg-charcoal-foreground/10 backdrop-blur-sm text-charcoal-foreground text-xs tracking-ultra-wide uppercase font-sans border border-charcoal-foreground/40 hover:bg-charcoal-foreground/20 transition-all duration-500"
+          className="btn-trace px-10 py-4 bg-white/10 backdrop-blur-sm text-white text-xs tracking-ultra-wide uppercase font-sans border border-white/40 hover:bg-white/20 transition-all duration-500"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.6 }}
