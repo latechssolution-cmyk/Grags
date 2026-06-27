@@ -8,11 +8,11 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const TAG_COLORS: Record<string, string> = {
-  Craft:    "text-amber-400   border-amber-400/30   bg-amber-400/5",
-  Style:    "text-blue-400    border-blue-400/30    bg-blue-400/5",
-  Heritage: "text-purple-400  border-purple-400/30  bg-purple-400/5",
-  Culture:  "text-green-400   border-green-400/30   bg-green-400/5",
-  Behind:   "text-rose-400    border-rose-400/30    bg-rose-400/5",
+  Craft:    "text-amber-600   border-amber-500/30   bg-amber-500/8",
+  Style:    "text-blue-600    border-blue-500/30    bg-blue-500/8",
+  Heritage: "text-purple-600  border-purple-500/30  bg-purple-500/8",
+  Culture:  "text-green-700   border-green-500/30   bg-green-500/8",
+  Behind:   "text-rose-600    border-rose-500/30    bg-rose-500/8",
 };
 
 function tagClass(tag: string) {

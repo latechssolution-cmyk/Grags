@@ -411,7 +411,7 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
         {menuOpen && (
           <>
             <motion.div
-              className="fixed inset-0 bg-charcoal/40 z-50"
+              className="fixed inset-0 bg-black/50 z-50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

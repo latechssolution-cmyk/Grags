@@ -25,15 +25,18 @@ exports.handler = async (event) => {
     if (event.httpMethod === "POST") {
       const { username, password } = JSON.parse(event.body || "{}");
 
-      // Constant-time comparison to resist timing attacks
-      const userMatch = crypto.timingSafeEqual(
-        Buffer.from(username || ""),
-        Buffer.from(ADMIN_USER)
-      );
-      const passMatch = crypto.timingSafeEqual(
-        Buffer.from(password || ""),
-        Buffer.from(ADMIN_PASS)
-      );
+      // Constant-time comparison — pad both buffers to equal length to prevent
+      // timingSafeEqual throwing ERR_CRYPTO_TIMING_SAFE_EQUAL_LENGTH
+      function safeCompare(a, b) {
+        const aBuf = Buffer.from(a);
+        const bBuf = Buffer.from(b);
+        const len = Math.max(aBuf.length, bBuf.length);
+        const aPad = Buffer.alloc(len); aBuf.copy(aPad);
+        const bPad = Buffer.alloc(len); bBuf.copy(bPad);
+        return crypto.timingSafeEqual(aPad, bPad);
+      }
+      const userMatch = safeCompare(username || "", ADMIN_USER);
+      const passMatch = safeCompare(password || "", ADMIN_PASS);
 
       if (!userMatch || !passMatch) {
         await new Promise((r) => setTimeout(r, 600)); // brute-force delay

@@ -16,6 +16,9 @@ const defaultArticles = [
     date: "June 2025",
     published: true,
     createdAt: "2025-06-01T00:00:00.000Z",
+    coverImage: "",
+    link: "",
+    keywords: ["polo", "craftsmanship", "fabric"],
   },
   {
     id: "j2",
@@ -26,6 +29,9 @@ const defaultArticles = [
     date: "May 2025",
     published: true,
     createdAt: "2025-05-01T00:00:00.000Z",
+    coverImage: "",
+    link: "",
+    keywords: ["summer", "style", "linen", "pakistan"],
   },
   {
     id: "j3",
@@ -36,6 +42,9 @@ const defaultArticles = [
     date: "April 2025",
     published: true,
     createdAt: "2025-04-01T00:00:00.000Z",
+    coverImage: "",
+    link: "",
+    keywords: ["gurkha", "heritage", "trousers", "history"],
   },
 ];
 

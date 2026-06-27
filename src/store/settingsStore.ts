@@ -71,7 +71,12 @@ function load(): SiteSettings {
     const s = localStorage.getItem(STORAGE_KEY);
     if (s) {
       const parsed = JSON.parse(s);
-      return { ...defaultSettings, ...parsed, collections: parsed.collections ?? defaultSettings.collections };
+      return {
+        ...defaultSettings,
+        ...parsed,
+        collections: parsed.collections ?? defaultSettings.collections,
+        sizeChart: parsed.sizeChart ?? defaultSettings.sizeChart,
+      };
     }
   } catch {}
   return defaultSettings;
@@ -101,6 +106,7 @@ export function useSettings() {
             ...defaultSettings,
             ...data,
             collections: data.collections ?? defaultSettings.collections,
+            sizeChart: data.sizeChart ?? defaultSettings.sizeChart,
           };
           saveSettings(merged);
           setSettings(merged);

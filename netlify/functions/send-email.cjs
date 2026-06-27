@@ -1,8 +1,22 @@
-const RESEND_API_KEY = "re_RuB8J43s_FpyzzeBxGrCc4yV3Jes8KHDV";
+const headers = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 
 exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers, body: "" };
+  }
+
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+    return { statusCode: 405, headers, body: "Method Not Allowed" };
+  }
+
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) {
+    console.error("RESEND_API_KEY environment variable is not set");
+    return { statusCode: 500, headers, body: JSON.stringify({ error: "Email service not configured" }) };
   }
 
   try {
@@ -25,20 +39,11 @@ exports.handler = async (event) => {
     const data = await res.json();
 
     if (!res.ok) {
-      return {
-        statusCode: res.status,
-        body: JSON.stringify({ error: data }),
-      };
+      return { statusCode: res.status, headers, body: JSON.stringify({ error: data }) };
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ success: true, id: data.id }),
-    };
+    return { statusCode: 200, headers, body: JSON.stringify({ success: true, id: data.id }) };
   } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
-    };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };

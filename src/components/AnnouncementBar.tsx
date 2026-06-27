@@ -10,8 +10,8 @@ const AnnouncementBar = () => {
 
   return (
     <>
-      {/* Announcement Bar */}
-      <div className="w-full bg-charcoal text-charcoal-foreground">
+      {/* Announcement Bar — intentionally always dark, acts as an accent stripe */}
+      <div className="w-full bg-foreground text-background">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-8 py-2 text-[11px] uppercase tracking-ultra-wide font-sans">
 
           {/* Track Order */}
@@ -92,12 +92,27 @@ const AnnouncementBar = () => {
                 <h3 className="text-sm font-semibold mb-3 tracking-wide">
                   Our Store
                 </h3>
-
-                <p className="text-sm text-foreground/80 leading-relaxed">
-                  Ground Floor, Main Plaza <br />
-                  Commercial Market <br />
-                  Islamabad, Pakistan
-                </p>
+                {settings.storeLocation ? (
+                  <>
+                    <p className="text-sm text-foreground/80 leading-relaxed mb-3">
+                      {settings.storeLocation}
+                    </p>
+                    {settings.googleMapsUrl && (
+                      <a
+                        href={settings.googleMapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-xs tracking-ultra-wide uppercase font-sans border border-foreground/30 px-4 py-2 hover:bg-foreground hover:text-background transition-colors"
+                      >
+                        Open in Maps ↗
+                      </a>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    Store location coming soon.
+                  </p>
+                )}
               </>
             )}
 

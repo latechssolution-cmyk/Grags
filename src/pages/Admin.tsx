@@ -586,7 +586,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="text-xs text-red-500 font-sans"
+                className="text-xs text-destructive font-sans"
               >
                 {error}
               </motion.p>
@@ -668,6 +668,16 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
 
   // Pre-load EmailJS SDK on mount
   useEffect(() => { initEmailJS(); }, []);
+
+  // Re-sync settings form state when MongoDB data arrives asynchronously
+  useEffect(() => {
+    setWhatsappNum(settings.whatsappNumber);
+    setContactEmail(settings.contactEmail ?? "");
+    setSenderEmail(settings.senderEmail ?? "");
+    setStoreLocation(settings.storeLocation ?? "");
+    setGoogleMapsUrl(settings.googleMapsUrl ?? "");
+    if (settings.sizeChart) setSizeChart(settings.sizeChart);
+  }, [settings]);
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
@@ -791,11 +801,11 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   };
 
   const statusColors: Record<OrderStatus, string> = {
-    Pending:   "text-yellow-500",
-    Confirmed: "text-blue-500",
-    Shipped:   "text-purple-500",
-    Delivered: "text-green-500",
-    Cancelled: "text-red-500",
+    Pending:   "text-yellow-600",
+    Confirmed: "text-blue-600",
+    Shipped:   "text-purple-600",
+    Delivered: "text-green-700",
+    Cancelled: "text-destructive",
   };
 
   return (
@@ -804,7 +814,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
         <motion.div
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`fixed top-5 right-5 z-[100] px-5 py-3 text-xs tracking-wide font-sans shadow-xl max-w-xs ${toast.ok ? "bg-foreground text-background" : "bg-red-600 text-white"}`}
+          className={`fixed top-5 right-5 z-[100] px-5 py-3 text-xs tracking-wide font-sans shadow-xl max-w-xs ${toast.ok ? "bg-foreground text-background" : "bg-destructive text-destructive-foreground"}`}
         >
           {toast.msg}
         </motion.div>
