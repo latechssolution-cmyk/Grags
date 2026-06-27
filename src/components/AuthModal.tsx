@@ -111,7 +111,7 @@ export default function AuthModal({ open, onClose }: Props) {
                     {mode === "signup" && field("email", "Email", "email")}
                     {field("password", "Password")}
 
-                    {error && <p className="text-red-500 text-xs">{error}</p>}
+                    {error && <p className="text-destructive text-xs">{error}</p>}
 
                     <button
                       type="submit"

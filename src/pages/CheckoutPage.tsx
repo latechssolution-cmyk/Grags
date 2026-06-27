@@ -312,7 +312,7 @@ export default function CheckoutPage() {
                     </button>
                   </div>
                   {couponResult && (
-                    <p className={`text-xs ${couponResult.valid ? "text-green-600" : "text-red-500"}`}>
+                    <p className={`text-xs ${couponResult.valid ? "text-green-600" : "text-destructive"}`}>
                       {couponResult.message}
                     </p>
                   )}

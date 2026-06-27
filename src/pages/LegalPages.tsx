@@ -193,7 +193,7 @@ export function ContactPage() {
                 <p className="text-green-600 text-xs">Message sent successfully. We'll be in touch soon.</p>
               )}
               {status === "error" && (
-                <p className="text-red-500 text-xs">Failed to send. Please try again or email us directly.</p>
+                <p className="text-destructive text-xs">Failed to send. Please try again or email us directly.</p>
               )}
               <button
                 type="submit"

@@ -531,7 +531,7 @@ const ProductDetail = () => {
               <motion.p
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-[10px] font-sans text-red-400 tracking-wide"
+                className="text-[10px] font-sans text-destructive tracking-wide"
               >
                 Please select a size before adding to cart.
               </motion.p>

@@ -96,7 +96,7 @@ const NewsletterSection = () => {
           </motion.form>
         )}
         {status === "error" && (
-          <p className="text-xs text-red-400 font-sans mt-3">Something went wrong. Please try again.</p>
+          <p className="text-xs text-destructive font-sans mt-3">Something went wrong. Please try again.</p>
         )}
       </div>
     </section>
