@@ -26,7 +26,7 @@ exports.handler = async (event) => {
     const resend = new Resend(RESEND_API_KEY);
 
     const { data, error } = await resend.emails.send({
-      from: "GRAGS <onboarding@resend.dev>",
+      from: "GRAGS <orders@grags.shop>",
       to,
       subject,
       html,
