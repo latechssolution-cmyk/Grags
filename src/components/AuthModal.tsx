@@ -26,6 +26,9 @@ export default function AuthModal({ open, onClose }: Props) {
 
     // Session-only auth — no backend for user accounts
     login({ username: form.username.trim(), email: form.email.trim() || undefined });
+    if (mode === "signup" && typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq("track", "CompleteRegistration");
+    }
     onClose();
     setForm({ username: "", email: "", password: "" });
   };

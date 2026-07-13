@@ -4,10 +4,10 @@ export type Theme = "light" | "dark";
 const STORAGE_KEY = "graggs_theme";
 
 function getInitial(): Theme {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   const saved = localStorage.getItem(STORAGE_KEY) as Theme | null;
   if (saved === "light" || saved === "dark") return saved;
-  return "dark";
+  return "light";
 }
 
 function applyTheme(theme: Theme) {
@@ -18,7 +18,7 @@ function applyTheme(theme: Theme) {
 }
 
 const listeners = new Set<() => void>();
-let current: Theme = typeof window !== "undefined" ? getInitial() : "dark";
+let current: Theme = typeof window !== "undefined" ? getInitial() : "light";
 
 if (typeof window !== "undefined") {
   applyTheme(current);

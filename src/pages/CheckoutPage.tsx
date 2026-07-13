@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, ShoppingBag, Tag, CheckCircle } from "lucide-react";
+import { ChevronLeft, ShoppingBag, Tag, CheckCircle, Upload, CreditCard } from "lucide-react";
 import { useCart } from "@/store/cartStore";
 import { useOrders } from "@/store/orderStore";
 import { useSettings } from "@/store/settingsStore";
 
-type PaymentMethod = "COD" | "Bank Transfer" | "EasyPaisa" | "JazzCash";
+type PaymentMethod = "COD" | "Bank Transfer" | "Card";
 type ShippingMethod = "Standard" | "Express";
+
+const BANK_TRANSFER_DISCOUNT = 200;
+const EXPRESS_SHIPPING_COST = 250;
 
 interface FormData {
   customerName: string;
@@ -27,8 +30,6 @@ interface FormData {
   billingPostalCode: string;
   billingCountry: string;
 }
-
-const SHIPPING_COST: Record<ShippingMethod, number> = { Standard: 250, Express: 500 };
 
 function Field({
   label, value, onChange, type = "text", required = true,
@@ -63,22 +64,60 @@ export default function CheckoutPage() {
   const [couponResult, setCouponResult] = useState<{ valid: boolean; discount: number; message: string } | null>(null);
   const [placed, setPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [receiptImage, setReceiptImage] = useState("");
+  const [redirecting, setRedirecting] = useState(false);
+  const [stripeError, setStripeError] = useState("");
 
   const set = (key: keyof FormData) => (v: string | boolean) =>
     setForm((f) => ({ ...f, [key]: v }));
 
-  const shippingCost = SHIPPING_COST[form.shippingMethod];
-  const discount = couponResult?.valid ? couponResult.discount : 0;
-  const total = subtotal + shippingCost - discount;
+  const setPaymentMethod = (m: PaymentMethod) => {
+    setForm((f) => ({
+      ...f,
+      paymentMethod: m,
+      // Express is Bank Transfer only — fall back to Standard for every other method
+      shippingMethod: m !== "Bank Transfer" && f.shippingMethod === "Express" ? "Standard" : f.shippingMethod,
+    }));
+    if (m !== "Bank Transfer") setReceiptImage("");
+  };
+
+  const handleReceiptUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setReceiptImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  // Meta Pixel — InitiateCheckout
+  useEffect(() => {
+    if (items.length > 0 && typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq("track", "InitiateCheckout", {
+        content_ids: items.map((i) => i.productId),
+        content_type: "product",
+        value: subtotal,
+        currency: "PKR",
+        num_items: items.length,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isBankTransfer = form.paymentMethod === "Bank Transfer";
+  const shippingCost = form.shippingMethod === "Express" ? EXPRESS_SHIPPING_COST : 0;
+  const bankTransferDiscount = isBankTransfer ? BANK_TRANSFER_DISCOUNT : 0;
+  const discount = (couponResult?.valid ? couponResult.discount : 0) + bankTransferDiscount;
+  const total = Math.max(0, subtotal + shippingCost - discount);
+  const receiptRequired = isBankTransfer && !receiptImage;
 
   const handleApplyCoupon = () => {
     const result = applyCoupon(couponInput.trim(), subtotal, items);
     setCouponResult(result);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) return;
+    if (items.length === 0 || receiptRequired) return;
 
     const id = `GRG-${Date.now().toString().slice(-6)}`;
     const order = {
@@ -98,9 +137,73 @@ export default function CheckoutPage() {
       total: `PKR ${total.toLocaleString()}`,
       date: new Date().toISOString().split("T")[0],
       status: "Pending" as const,
+      ...(isBankTransfer && receiptImage ? { receiptImage } : {}),
     };
 
     addOrder(order);
+
+    if (form.paymentMethod === "Card") {
+      setStripeError("");
+      setRedirecting(true);
+      try {
+        const res = await fetch("/.netlify/functions/stripe-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: id,
+            email: form.email,
+            currency: "PKR",
+            shippingCost,
+            items: items.map((i) => ({
+              name: i.name,
+              price: parseInt(i.price.replace(/[^0-9]/g, "")) || 0,
+              quantity: i.quantity,
+            })),
+          }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          clear();
+          window.location.href = data.url;
+          return;
+        }
+        setStripeError(data.error || "Could not start payment. Please try again.");
+      } catch {
+        setStripeError("Could not start payment. Please try again.");
+      }
+      setRedirecting(false);
+      return;
+    }
+
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", "purchase", {
+        transaction_id: id,
+        value: total,
+        currency: "PKR",
+        items: items.map((i) => ({
+          item_id: i.productId,
+          item_name: i.name,
+          price: parseInt(i.price.replace(/[^0-9]/g, "")) || 0,
+          quantity: i.quantity,
+          item_size: i.size,
+        })),
+      });
+    }
+
+    if (typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq("track", "Purchase", {
+        value: total,
+        currency: "PKR",
+        content_type: "product",
+        content_ids: items.map((i) => i.productId),
+        contents: items.map((i) => ({
+          id: i.productId,
+          quantity: i.quantity,
+          item_price: parseInt(i.price.replace(/[^0-9]/g, "")) || 0,
+        })),
+      });
+    }
+
     clear();
     setOrderId(id);
     setPlaced(true);
@@ -201,23 +304,38 @@ export default function CheckoutPage() {
                   Shipping Method
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {(["Standard", "Express"] as ShippingMethod[]).map((m) => (
-                    <label
-                      key={m}
-                      className={`flex items-center justify-between border px-4 py-3.5 cursor-pointer transition-colors ${
-                        form.shippingMethod === m ? "border-foreground" : "border-foreground/15 hover:border-foreground/30"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${form.shippingMethod === m ? "border-foreground" : "border-foreground/30"}`}>
-                          {form.shippingMethod === m && <div className="w-2 h-2 rounded-full bg-foreground" />}
+                  {(["Standard", "Express"] as ShippingMethod[]).map((m) => {
+                    const disabled = m === "Express" && !isBankTransfer;
+                    const cost = m === "Express" ? EXPRESS_SHIPPING_COST : 0;
+                    return (
+                      <label
+                        key={m}
+                        className={`flex items-center justify-between border px-4 py-3.5 transition-colors ${
+                          disabled
+                            ? "border-foreground/10 opacity-40 cursor-not-allowed"
+                            : `cursor-pointer ${form.shippingMethod === m ? "border-foreground" : "border-foreground/15 hover:border-foreground/30"}`
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${form.shippingMethod === m ? "border-foreground" : "border-foreground/30"}`}>
+                            {form.shippingMethod === m && <div className="w-2 h-2 rounded-full bg-foreground" />}
+                          </div>
+                          <div>
+                            <span className="text-sm block">{m}</span>
+                            {disabled && <span className="text-[10px] text-foreground/40">Bank Transfer only</span>}
+                          </div>
                         </div>
-                        <span className="text-sm">{m}</span>
-                      </div>
-                      <span className="text-sm text-foreground/60">PKR {SHIPPING_COST[m].toLocaleString()}</span>
-                      <input type="radio" className="sr-only" checked={form.shippingMethod === m} onChange={() => set("shippingMethod")(m)} />
-                    </label>
-                  ))}
+                        <span className="text-sm text-foreground/60">{cost > 0 ? `+PKR ${cost.toLocaleString()}` : "Free"}</span>
+                        <input
+                          type="radio"
+                          className="sr-only"
+                          disabled={disabled}
+                          checked={form.shippingMethod === m}
+                          onChange={() => set("shippingMethod")(m)}
+                        />
+                      </label>
+                    );
+                  })}
                 </div>
               </section>
 
@@ -227,7 +345,11 @@ export default function CheckoutPage() {
                   Payment Method
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {(["COD", "Bank Transfer", "EasyPaisa", "JazzCash"] as PaymentMethod[]).map((m) => (
+                  {([
+                    "COD",
+                    "Bank Transfer",
+                    ...(settings.stripeEnabled ? ["Card" as PaymentMethod] : []),
+                  ] as PaymentMethod[]).map((m) => (
                     <label
                       key={m}
                       className={`flex items-center gap-3 border px-4 py-3.5 cursor-pointer transition-colors ${
@@ -237,11 +359,43 @@ export default function CheckoutPage() {
                       <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${form.paymentMethod === m ? "border-foreground" : "border-foreground/30"}`}>
                         {form.paymentMethod === m && <div className="w-2 h-2 rounded-full bg-foreground" />}
                       </div>
-                      <span className="text-sm">{m}</span>
-                      <input type="radio" className="sr-only" checked={form.paymentMethod === m} onChange={() => set("paymentMethod")(m)} />
+                      <span className="text-sm flex items-center gap-1.5">
+                        {m === "Card" && <CreditCard size={13} />}
+                        {m === "Card" ? "Card (Stripe)" : m}
+                      </span>
+                      {m === "Bank Transfer" && (
+                        <span className="ml-auto text-[10px] tracking-wide uppercase text-green-600 border border-green-600/30 px-1.5 py-0.5">
+                          Save PKR {BANK_TRANSFER_DISCOUNT}
+                        </span>
+                      )}
+                      <input type="radio" className="sr-only" checked={form.paymentMethod === m} onChange={() => setPaymentMethod(m)} />
                     </label>
                   ))}
                 </div>
+
+                {/* Bank Transfer details + receipt upload */}
+                {isBankTransfer && (
+                  <div className="border border-foreground/15 p-4 space-y-4">
+                    {settings.bankAccountDetails && (
+                      <div>
+                        <p className="text-xs text-foreground/50 tracking-widest uppercase mb-1.5">Transfer To</p>
+                        <p className="text-sm whitespace-pre-line leading-relaxed">{settings.bankAccountDetails}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs text-foreground/50 tracking-widest uppercase mb-1.5">Payment Receipt *</p>
+                      <p className="text-xs text-foreground/40 mb-2">Attach a screenshot of your transfer — required before you can place the order.</p>
+                      <label className="flex items-center gap-2 border border-foreground/20 px-4 py-3 cursor-pointer hover:border-foreground/40 transition-colors w-fit">
+                        <Upload size={14} />
+                        <span className="text-xs tracking-widest uppercase">{receiptImage ? "Replace Receipt" : "Upload Receipt"}</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={handleReceiptUpload} />
+                      </label>
+                      {receiptImage && (
+                        <img src={receiptImage} alt="Receipt preview" className="mt-3 max-h-40 border border-foreground/10 object-contain" />
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Billing Address */}
                 <label className="flex items-center gap-3 cursor-pointer mt-2">
@@ -326,12 +480,18 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-foreground/50">Shipping</span>
-                    <span>PKR {shippingCost.toLocaleString()}</span>
+                    <span>{shippingCost > 0 ? `PKR ${shippingCost.toLocaleString()}` : "Free"}</span>
                   </div>
-                  {discount > 0 && (
+                  {bankTransferDiscount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
-                      <span>Discount</span>
-                      <span>-PKR {discount.toLocaleString()}</span>
+                      <span>Bank Transfer Discount</span>
+                      <span>-PKR {bankTransferDiscount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {couponResult?.valid && couponResult.discount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Coupon Discount</span>
+                      <span>-PKR {couponResult.discount.toLocaleString()}</span>
                     </div>
                   )}
                   <div className="flex justify-between font-medium pt-2 border-t border-foreground/10">
@@ -342,10 +502,17 @@ export default function CheckoutPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-foreground text-background text-xs tracking-widest uppercase font-semibold py-4 hover:bg-foreground/90 transition-colors"
+                  disabled={receiptRequired || redirecting}
+                  className="w-full bg-foreground text-background text-xs tracking-widest uppercase font-semibold py-4 hover:bg-foreground/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Place Order
+                  {redirecting ? "Redirecting to Payment..." : form.paymentMethod === "Card" ? "Pay with Card" : "Place Order"}
                 </button>
+                {receiptRequired && (
+                  <p className="text-xs text-destructive text-center">Attach your payment receipt to continue.</p>
+                )}
+                {stripeError && (
+                  <p className="text-xs text-destructive text-center">{stripeError}</p>
+                )}
               </div>
             </div>
           </div>

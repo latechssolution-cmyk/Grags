@@ -2,13 +2,13 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Plus, Minus, ChevronRight, ShoppingBag, Check, Star } from "lucide-react";
-import { useProducts, Product, getProductUrl, ProductReview } from "@/store/productStore";
+import { useProducts, Product, getProductUrl, ProductReview, SizeChart } from "@/store/productStore";
 import { useCart } from "@/store/cartStore";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import BookingModal from "@/components/BookingModal";
+import { useSEO } from "@/hooks/useSEO";
 
 // ── Sizing data ────────────────────────────────────────────
 const TOP_SIZES: Record<string, { bodyLength: number; chestWidth: number; sleeveLength: number }> = {
@@ -158,11 +158,53 @@ const StarRating = ({ rating, size = 14 }: { rating: number; size?: number }) =>
 );
 
 // ── Size Guide ────────────────────────────────────────────
-const SizeGuide = ({ sizes, isBottom }: { sizes: string[]; isBottom: boolean }) => {
+const SizeGuide = ({
+  sizes,
+  isBottom,
+  customChart,
+  customImage,
+}: {
+  sizes: string[];
+  isBottom: boolean;
+  customChart?: SizeChart;
+  customImage?: string;
+}) => {
   const [activeSize, setActiveSize] = useState<string>(sizes[0] ?? "");
 
   const topData = TOP_SIZES[activeSize];
   const botData = BOTTOM_SIZES[activeSize];
+
+  if (customImage) {
+    return <img src={customImage} alt="Size chart" className="w-full max-w-md mx-auto" />;
+  }
+
+  if (customChart && customChart.rows.length > 0) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs font-sans border-collapse">
+          <thead>
+            <tr className="bg-secondary">
+              {customChart.headers.map((h, i) => (
+                <th key={i} className="text-left px-4 py-3 text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-medium border border-border">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {customChart.rows.map((row, ri) => (
+              <tr key={ri} className={ri % 2 === 1 ? "bg-secondary/30" : undefined}>
+                <td className="px-4 py-3 text-foreground font-medium border border-border">{row.size}</td>
+                {row.values.map((v, vi) => (
+                  <td key={vi} className="px-4 py-3 text-center text-muted-foreground border border-border">{v}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -258,10 +300,8 @@ const SizeGuide = ({ sizes, isBottom }: { sizes: string[]; isBottom: boolean }) 
 // ── Recommended Card ───────────────────────────────────────
 const RecommendedCard = ({
   product,
-  onBook,
 }: {
   product: Product;
-  onBook: (p: Product) => void;
 }) => {
   const hasVariants = product.colorVariants && product.colorVariants.length > 0;
   const displayImage = hasVariants ? (product.colorVariants[0]?.image || product.image) : product.image;
@@ -292,7 +332,7 @@ const RecommendedCard = ({
 // ── Main Page ─────────────────────────────────────────────
 const ProductDetail = () => {
   const { code: routeParam } = useParams<{ code: string }>();
-  const { products, addReview } = useProducts();
+  const { products, addReview, getVariantStock } = useProducts();
 
   const product = products.find((p) => {
     if (!routeParam) return false;
@@ -307,7 +347,6 @@ const ProductDetail = () => {
 
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>("");
-  const [booking, setBooking] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [cartAdded, setCartAdded] = useState(false);
   const [sizeError, setSizeError] = useState(false);
@@ -327,6 +366,11 @@ const ProductDetail = () => {
       return;
     }
     const colorName = product.colorVariants?.[selectedVariant]?.name ?? "";
+    if (getVariantStock(product, colorName, selectedSize) <= 0) {
+      setSizeError(true);
+      setTimeout(() => setSizeError(false), 2000);
+      return;
+    }
     addItem({
       productId: product.id,
       name: product.name,
@@ -337,11 +381,42 @@ const ProductDetail = () => {
       quantity: 1,
     });
     setCartAdded(true);
+    if (typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq("track", "AddToCart", {
+        content_ids: [product.id],
+        content_type: "product",
+        value: parseInt(product.price.replace(/[^0-9]/g, "")) || 0,
+        currency: "PKR",
+      });
+    }
     setTimeout(() => setCartAdded(false), 2000);
   };
 
   // Scroll to top on product change
   useEffect(() => { window.scrollTo(0, 0); }, [routeParam]);
+
+  useSEO(
+    product
+      ? {
+          title: `${product.name} — Grags`,
+          description: product.description || undefined,
+          keywords: product.keywords,
+          image: product.image,
+        }
+      : {}
+  );
+
+  // Meta Pixel — ViewContent
+  useEffect(() => {
+    if (product && typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq("track", "ViewContent", {
+        content_ids: [product.id],
+        content_type: "product",
+        value: parseInt(product.price.replace(/[^0-9]/g, "")) || 0,
+        currency: "PKR",
+      });
+    }
+  }, [product?.id]);
 
   const toggleSection = (key: string) =>
     setOpenSection((prev) => (prev === key ? null : key));
@@ -427,11 +502,18 @@ const ProductDetail = () => {
             </Link>
 
             {/* Badge */}
-            {product.tag && (
-              <span className="inline-block px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans bg-secondary text-secondary-foreground">
-                {product.tag}
-              </span>
-            )}
+            <div className="flex flex-wrap gap-2">
+              {product.tag && (
+                <span className="inline-block px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans bg-secondary text-secondary-foreground">
+                  {product.tag}
+                </span>
+              )}
+              {product.orderType === "preorder" && (
+                <span className="inline-block px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans bg-accent text-accent-foreground">
+                  Pre-Order
+                </span>
+              )}
+            </div>
 
             {/* Title */}
             <div>
@@ -509,19 +591,27 @@ const ProductDetail = () => {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {product.sizes.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setSelectedSize(s)}
-                      className={`min-w-[44px] h-11 px-3 text-xs tracking-ultra-wide uppercase font-sans border-2 transition-colors duration-200 ${
-                        selectedSize === s
-                          ? "bg-foreground text-background border-foreground"
-                          : "bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
+                  {product.sizes.map((s) => {
+                    const colorName = product.colorVariants?.[selectedVariant]?.name ?? "";
+                    const outOfStock = getVariantStock(product, colorName, s) <= 0;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => !outOfStock && setSelectedSize(s)}
+                        disabled={outOfStock}
+                        title={outOfStock ? "Out of stock in this size/color" : undefined}
+                        className={`min-w-[44px] h-11 px-3 text-xs tracking-ultra-wide uppercase font-sans border-2 transition-colors duration-200 ${
+                          outOfStock
+                            ? "bg-transparent text-muted-foreground/30 border-border/50 cursor-not-allowed line-through"
+                            : selectedSize === s
+                            ? "bg-foreground text-background border-foreground"
+                            : "bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -551,7 +641,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Desktop: Add to Cart + Book Now */}
+            {/* Desktop: Add to Cart */}
             <div className="hidden md:flex flex-col gap-2">
               <button
                 onClick={handleAddToCart}
@@ -564,16 +654,11 @@ const ProductDetail = () => {
               >
                 {cartAdded ? (
                   <><Check className="w-3.5 h-3.5" /> Added to Cart</>
+                ) : product.stock === 0 ? (
+                  "Out of Stock"
                 ) : (
                   <><ShoppingBag className="w-3.5 h-3.5" /> Add to Cart</>
                 )}
-              </button>
-              <button
-                onClick={() => setBooking(true)}
-                disabled={product.stock === 0}
-                className="w-full py-3 border border-foreground text-foreground text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-foreground hover:text-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-              >
-                {product.stock > 0 ? "Reserve / Book" : "Out of Stock"}
               </button>
             </div>
 
@@ -586,7 +671,7 @@ const ProductDetail = () => {
                   isOpen={openSection === "size"}
                   onToggle={() => toggleSection("size")}
                 >
-                  <SizeGuide sizes={product.sizes} isBottom={isBottom} />
+                  <SizeGuide sizes={product.sizes} isBottom={isBottom} customChart={product.sizeChart} customImage={product.sizeChartImage} />
                 </Accordion>
               )}
 
@@ -873,7 +958,7 @@ const ProductDetail = () => {
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {recommended.map((p) => (
-                <RecommendedCard key={p.id} product={p} onBook={() => {}} />
+                <RecommendedCard key={p.id} product={p} />
               ))}
             </div>
           </section>
@@ -902,24 +987,8 @@ const ProductDetail = () => {
           >
             {cartAdded ? <><Check className="w-3 h-3" /> Added</> : <><ShoppingBag className="w-3 h-3" /> Add to Cart</>}
           </button>
-          <button
-            onClick={() => setBooking(true)}
-            disabled={product.stock === 0}
-            className="px-4 py-3.5 border border-foreground text-foreground text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-foreground hover:text-background disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-          >
-            Book
-          </button>
         </div>
       </div>
-
-      {/* ── Booking Modal ── */}
-      {booking && (
-        <BookingModal
-          product={product}
-          selectedVariantIdx={selectedVariant}
-          onClose={() => setBooking(false)}
-        />
-      )}
     </div>
   );
 };

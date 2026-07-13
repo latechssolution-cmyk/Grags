@@ -1,24 +1,51 @@
 import { useState, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Check, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Product, getProductUrl } from "@/store/productStore";
+import { useCart } from "@/store/cartStore";
 
 export interface ProductCardProps {
   product: Product;
   index: number;
-  onBook: (p: Product, variantIdx: number) => void;
 }
 
-export const ProductCard = ({ product, index, onBook }: ProductCardProps) => {
+export const ProductCard = ({ product, index }: ProductCardProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [selectedVariant, setSelectedVariant] = useState(0);
+  const [added, setAdded] = useState(false);
+  const { addItem } = useCart();
 
   const hasVariants = product.colorVariants && product.colorVariants.length > 0;
   const displayImage = hasVariants
     ? (product.colorVariants[selectedVariant]?.image || product.image)
     : product.image;
+
+  const handleQuickAdd = () => {
+    const colorName = product.colorVariants?.[selectedVariant]?.name ?? "";
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: displayImage,
+      size: product.sizes[0] || "One Size",
+      color: colorName,
+      quantity: 1,
+    });
+    setAdded(true);
+    toast.success(`${product.name} added to cart`);
+    if (typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq("track", "AddToCart", {
+        content_ids: [product.id],
+        content_type: "product",
+        value: parseInt(product.price.replace(/[^0-9]/g, "")) || 0,
+        currency: "PKR",
+      });
+    }
+    setTimeout(() => setAdded(false), 2000);
+  };
 
   return (
     <motion.div
@@ -42,29 +69,38 @@ export const ProductCard = ({ product, index, onBook }: ProductCardProps) => {
         </Link>
 
         {/* Badge */}
-        {product.tag && (
-          <span className="absolute top-4 left-4 px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans bg-background/90 text-foreground pointer-events-none z-10">
-            {product.tag}
-          </span>
-        )}
+        <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10 pointer-events-none">
+          {product.tag && (
+            <span className="px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans bg-background/90 text-foreground w-fit">
+              {product.tag}
+            </span>
+          )}
+          {product.orderType === "preorder" && (
+            <span className="px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans bg-accent text-accent-foreground w-fit">
+              Pre-Order
+            </span>
+          )}
+        </div>
 
-        {/* Book Now — slides up on hover, padded right to leave room for + */}
+        {/* Add to Cart — slides up on hover, padded right to leave room for + */}
         <div className="absolute bottom-0 left-0 right-0 p-3 pr-14 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
           <button
-            onClick={() => onBook(product, selectedVariant)}
-            className="w-full py-3 bg-primary text-primary-foreground text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-primary/90 transition-colors duration-300"
+            onClick={handleQuickAdd}
+            disabled={product.stock === 0}
+            className="w-full py-3 bg-primary text-primary-foreground text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-primary/90 transition-colors duration-300 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Add to Cart
+            {added ? (<><Check className="w-3.5 h-3.5" /> Added</>) : product.stock === 0 ? "Out of Stock" : "Add to Cart"}
           </button>
         </div>
 
         {/* Quick-add + button — bottom-right corner, appears on hover */}
         <button
-          onClick={() => onBook(product, selectedVariant)}
+          onClick={handleQuickAdd}
+          disabled={product.stock === 0}
           title={`Quick add${hasVariants ? ` — ${product.colorVariants[selectedVariant]?.name}` : ""}`}
-          className="absolute bottom-3 right-3 w-9 h-9 bg-background text-foreground border border-border flex items-center justify-center hover:bg-foreground hover:text-background transition-colors duration-200 opacity-0 group-hover:opacity-100 z-20"
+          className="absolute bottom-3 right-3 w-9 h-9 bg-background text-foreground border border-border flex items-center justify-center hover:bg-foreground hover:text-background transition-colors duration-200 opacity-0 group-hover:opacity-100 z-20 disabled:opacity-30"
         >
-          <Plus className="w-4 h-4" />
+          {added ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
         </button>
       </div>
 

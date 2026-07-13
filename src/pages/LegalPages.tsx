@@ -59,7 +59,7 @@ export function TermsPage() {
     <PageLayout title="Terms of Service">
       <P>Please read these terms carefully before using our website or placing an order.</P>
       <H2>Orders and Payments</H2>
-      <P>All orders are subject to availability. We accept Cash on Delivery (COD), Bank Transfer, EasyPaisa, and JazzCash. Prices are listed in Pakistani Rupees (PKR) and are inclusive of applicable taxes.</P>
+      <P>All orders are subject to availability. We accept Cash on Delivery (COD) and Bank Transfer. Prices are listed in Pakistani Rupees (PKR) and are inclusive of applicable taxes.</P>
       <H2>Shipping Policy</H2>
       <P>Standard delivery typically takes 5–7 business days. Express delivery takes 2–3 business days. Shipping charges are calculated at checkout. We currently ship within Pakistan only.</P>
       <H2>Returns and Exchanges</H2>
@@ -93,6 +93,9 @@ export function ContactPage() {
       if (res.ok) {
         setStatus("success");
         setForm({ name: "", email: "", message: "" });
+        if (typeof window !== "undefined" && (window as any).fbq) {
+          (window as any).fbq("track", "Contact");
+        }
       } else {
         setStatus("error");
       }

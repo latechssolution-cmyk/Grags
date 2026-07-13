@@ -1,40 +1,55 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star } from "lucide-react";
+import { useProducts } from "@/store/productStore";
 
-const reviews = [
+const fallbackReviews = [
   {
     name: "Ahmed R.",
-    location: "Lahore",
-    text: "The fabric quality is unmatched. This polo feels like something from a European luxury house. GRAGS has raised the bar for Pakistani menswear.",
-    rating: 5,
     product: "Textured Polo — Olive",
+    text: "The fabric quality is unmatched. This polo feels like something from a European luxury house. Grags has raised the bar for Pakistani menswear.",
+    rating: 5,
   },
   {
     name: "Bilal K.",
-    location: "Karachi",
+    product: "Gurkha Pants — Khaki",
     text: "Ordered the Gurkha Pants and I'm genuinely impressed. The tailoring, the finish, the way it drapes — everything screams quality.",
     rating: 5,
-    product: "Gurkha Pants — Khaki",
   },
   {
     name: "Usman S.",
-    location: "Islamabad",
+    product: "Signature Dual-Tone Polo",
     text: "Finally a brand that understands modern masculinity. Clean designs, premium fabrics, and packaging that makes you feel special.",
     rating: 5,
-    product: "Signature Dual-Tone Polo",
   },
 ];
 
 const ReviewsSection = () => {
+  const { products } = useProducts();
   const [current, setCurrent] = useState(0);
+
+  // Pull every customer review submitted on any product page, newest first.
+  // Falls back to curated testimonials until real reviews exist.
+  const reviews = useMemo(() => {
+    const live = products
+      .flatMap((p) => (p.reviews ?? []).map((r) => ({ ...r, product: p.name })))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return live.length > 0 ? live : fallbackReviews;
+  }, [products]);
+
+  useEffect(() => {
+    if (current >= reviews.length) setCurrent(0);
+  }, [reviews.length, current]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrent((prev) => (prev + 1) % reviews.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [reviews.length]);
+
+  const active = reviews[current];
+  if (!active) return null;
 
   return (
     <section className="px-5 md:px-10 py-20 md:py-32">
@@ -64,7 +79,7 @@ const ReviewsSection = () => {
             className="flex flex-col items-center"
           >
             <div className="flex gap-1 mb-6">
-              {Array.from({ length: reviews[current].rating }).map((_, i) => (
+              {Array.from({ length: active.rating }).map((_, i) => (
                 <Star
                   key={i}
                   className="w-4 h-4 fill-foreground text-foreground"
@@ -72,13 +87,13 @@ const ReviewsSection = () => {
               ))}
             </div>
             <p className="text-lg md:text-xl font-serif italic text-foreground/90 leading-relaxed mb-6">
-              "{reviews[current].text}"
+              "{active.text}"
             </p>
             <p className="text-sm font-sans font-medium text-foreground tracking-wide">
-              {reviews[current].name}
+              {active.name}
             </p>
             <p className="text-xs font-sans text-muted-foreground mt-1">
-              {reviews[current].location} — {reviews[current].product}
+              {active.product}
             </p>
           </motion.div>
         </AnimatePresence>

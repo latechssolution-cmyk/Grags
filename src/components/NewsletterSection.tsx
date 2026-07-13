@@ -20,6 +20,9 @@ const NewsletterSection = () => {
       if (res.ok) {
         setStatus("sent");
         setEmail("");
+        if (typeof window !== "undefined" && (window as any).fbq) {
+          (window as any).fbq("track", "Subscribe", { value: "0.00", currency: "PKR", predicted_ltv: "0.00" });
+        }
       } else {
         setStatus("error");
       }

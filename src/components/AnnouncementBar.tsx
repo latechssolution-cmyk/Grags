@@ -11,12 +11,12 @@ const AnnouncementBar = () => {
   return (
     <>
       {/* Announcement Bar — intentionally always dark, acts as an accent stripe */}
-      <div className="w-full bg-foreground text-background">
+      <div className="w-full bg-charcoal text-charcoal-foreground">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-8 py-2 text-[11px] uppercase tracking-ultra-wide font-sans">
 
           {/* Track Order */}
           <a
-            href="https://www.tcs.com.pk/tracking"
+            href={settings.trackOrderUrl || "https://www.tcs.com.pk/tracking"}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition"
@@ -38,7 +38,12 @@ const AnnouncementBar = () => {
 
           {/* Store Location */}
           <button
-            onClick={() => setPopup("location")}
+            onClick={() => {
+              setPopup("location");
+              if (typeof window !== "undefined" && (window as any).fbq) {
+                (window as any).fbq("track", "FindLocation");
+              }
+            }}
             className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition"
           >
             <MapPin className="w-3.5 h-3.5" />

@@ -1,12 +1,10 @@
-import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import BookingModal from "@/components/BookingModal";
-import { useProducts, Product } from "@/store/productStore";
+import { useProducts } from "@/store/productStore";
 import { useSettings } from "@/store/settingsStore";
 import { ProductCard } from "@/components/ProductCard";
 
@@ -14,15 +12,8 @@ const CollectionPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { settings } = useSettings();
   const { getByCollection } = useProducts();
-  const [bookingProduct, setBookingProduct] = useState<Product | null>(null);
-  const [bookingVariantIdx, setBookingVariantIdx] = useState(0);
 
   const collection = (settings.collections ?? []).find((c) => c.slug === slug);
-
-  const handleBook = (p: Product, variantIdx: number) => {
-    setBookingProduct(p);
-    setBookingVariantIdx(variantIdx);
-  };
 
   if (!collection) {
     return (
@@ -38,6 +29,13 @@ const CollectionPage = () => {
   }
 
   const filtered = getByCollection(collection.name);
+  const sections = collection.sections ?? [];
+  const sectioned = sections.map((s) => ({
+    section: s,
+    products: filtered.filter((p) => (p.sectionIds ?? []).includes(s.id)),
+  }));
+  const sectionedIds = new Set(sectioned.flatMap((g) => g.products.map((p) => p.id)));
+  const unsectioned = filtered.filter((p) => !sectionedIds.has(p.id));
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,11 +57,40 @@ const CollectionPage = () => {
             <motion.p className="text-center text-muted-foreground font-sans text-sm tracking-wide" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               No products available in this collection yet.
             </motion.p>
-          ) : (
+          ) : sections.length === 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
               {filtered.map((product, i) => (
-                <ProductCard key={product.id} product={product} index={i} onBook={handleBook} />
+                <ProductCard key={product.id} product={product} index={i} />
               ))}
+            </div>
+          ) : (
+            <div className="max-w-7xl mx-auto space-y-20">
+              {sectioned.map(({ section, products }) => products.length > 0 && (
+                <div key={section.id} id={section.slug}>
+                  <h3 className="text-xl md:text-2xl font-serif font-bold text-foreground mb-8 pb-3 border-b border-border">
+                    {section.name}
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                    {products.map((product, i) => (
+                      <ProductCard key={product.id} product={product} index={i} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {unsectioned.length > 0 && (
+                <div>
+                  {sections.length > 0 && (
+                    <h3 className="text-xl md:text-2xl font-serif font-bold text-foreground mb-8 pb-3 border-b border-border">
+                      More from {collection.title}
+                    </h3>
+                  )}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                    {unsectioned.map((product, i) => (
+                      <ProductCard key={product.id} product={product} index={i} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -71,13 +98,6 @@ const CollectionPage = () => {
       <Footer />
       <WhatsAppButton />
       <div className="grain-overlay" />
-      {bookingProduct && (
-        <BookingModal
-          product={bookingProduct}
-          selectedVariantIdx={bookingVariantIdx}
-          onClose={() => setBookingProduct(null)}
-        />
-      )}
     </div>
   );
 };

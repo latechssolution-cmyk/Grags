@@ -73,10 +73,11 @@ exports.handler = async (event) => {
       };
     }
 
-    // PUT: Update order status
+    // PUT: Update order fields (status, receiptImage, etc.)
     if (event.httpMethod === "PUT") {
       const { id } = event.queryStringParameters || {};
-      const { status } = JSON.parse(event.body);
+      const updates = JSON.parse(event.body);
+      delete updates._id;
 
       if (!id) {
         return { statusCode: 400, headers, body: "Missing order id in query parameter" };
@@ -84,13 +85,13 @@ exports.handler = async (event) => {
 
       await collection.updateOne(
         { id: id },
-        { $set: { status } }
+        { $set: updates }
       );
 
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, id, status }),
+        body: JSON.stringify({ success: true, id, ...updates }),
       };
     }
 

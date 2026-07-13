@@ -44,7 +44,7 @@ const CinematicLoader = ({ onComplete }: { onComplete: () => void }) => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.8 }}
         >
-          Heritage Menswear
+          Wear The Unique
         </motion.p>
 
         {phase === "shimmer" && (

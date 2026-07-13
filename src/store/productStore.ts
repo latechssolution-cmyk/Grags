@@ -19,6 +19,20 @@ export interface ProductReview {
   date: string;   // ISO date string
 }
 
+export interface SizeChartRow {
+  size: string;
+  values: string[];
+}
+
+export interface SizeChart {
+  headers: string[];
+  rows: SizeChartRow[];
+}
+
+// Key format: `${color}|${size}` — lets stock be tracked per individual
+// color + size combination. Falls back to Product.stock when unset.
+export type VariantStock = Record<string, number>;
+
 export interface Product {
   id: string;
   name: string;
@@ -40,6 +54,16 @@ export interface Product {
   installments?: number;
   discountPercent?: number;
   reviews?: ProductReview[];
+  keywords?: string[];
+  orderType?: "order" | "preorder";
+  variantStock?: VariantStock;
+  sizeChart?: SizeChart;
+  sizeChartImage?: string;
+  sectionIds?: string[];
+}
+
+export function variantStockKey(color: string, size: string): string {
+  return `${color}|${size}`;
 }
 
 export type StockStatus = "in" | "limited" | "out";
@@ -305,7 +329,11 @@ export function useProducts() {
 
   const getById = useCallback((id: string) => products.find((p) => p.id === id || p.sku === id), [products]);
 
-  const getVariantStock = useCallback((product: Product): number => {
+  const getVariantStock = useCallback((product: Product, color?: string, size?: string): number => {
+    if (product.variantStock && color && size) {
+      const key = variantStockKey(color, size);
+      if (key in product.variantStock) return product.variantStock[key];
+    }
     return product.stock;
   }, []);
 

@@ -100,6 +100,14 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
                 {/* Payment */}
                 <Section title="Payment" icon={CreditCard}>
                   <Row label="Method" value={order.paymentMethod} />
+                  {order.receiptImage && (
+                    <div className="pt-2">
+                      <p className="text-foreground/40 text-xs mb-1.5">Payment Receipt</p>
+                      <a href={order.receiptImage} target="_blank" rel="noopener noreferrer">
+                        <img src={order.receiptImage} alt="Payment receipt" className="max-w-full max-h-64 border border-foreground/10 object-contain" />
+                      </a>
+                    </div>
+                  )}
                   {!order.sameAsBilling && (
                     <>
                       <div className="text-foreground/30 text-xs pt-1">Billing Address</div>

@@ -1,11 +1,9 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import BookingModal from "@/components/BookingModal";
-import { useProducts, Product } from "@/store/productStore";
+import { useProducts } from "@/store/productStore";
 import { ProductCard } from "@/components/ProductCard";
 
 interface CategoryPageProps {
@@ -17,13 +15,6 @@ interface CategoryPageProps {
 const CategoryPage = ({ tag, title, subtitle }: CategoryPageProps) => {
   const { getByTag } = useProducts();
   const filtered = getByTag(tag);
-  const [bookingProduct, setBookingProduct] = useState<Product | null>(null);
-  const [bookingVariantIdx, setBookingVariantIdx] = useState(0);
-
-  const handleBook = (p: Product, variantIdx: number) => {
-    setBookingProduct(p);
-    setBookingVariantIdx(variantIdx);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,7 +39,7 @@ const CategoryPage = ({ tag, title, subtitle }: CategoryPageProps) => {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
               {filtered.map((product, i) => (
-                <ProductCard key={product.id} product={product} index={i} onBook={handleBook} />
+                <ProductCard key={product.id} product={product} index={i} />
               ))}
             </div>
           )}
@@ -57,13 +48,6 @@ const CategoryPage = ({ tag, title, subtitle }: CategoryPageProps) => {
       <Footer />
       <WhatsAppButton />
       <div className="grain-overlay" />
-      {bookingProduct && (
-        <BookingModal
-          product={bookingProduct}
-          selectedVariantIdx={bookingVariantIdx}
-          onClose={() => setBookingProduct(null)}
-        />
-      )}
     </div>
   );
 };

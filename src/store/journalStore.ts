@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 
+export type ImagePosition = "top" | "bottom" | "left" | "right";
+
 export interface JournalArticle {
   id: string;
   title: string;
@@ -12,6 +14,30 @@ export interface JournalArticle {
   coverImage?: string;
   link?: string;
   keywords?: string[];
+  imagePosition?: ImagePosition;
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+export function getArticleUrl(article: JournalArticle): string {
+  return `/journal/${slugify(article.title)}-${article.id}`;
+}
+
+// Google Drive share links point to an HTML viewer page, not the raw image —
+// rewrite them to Drive's direct-content endpoint so <img> can load them.
+export function resolveImageUrl(url?: string): string {
+  if (!url) return "";
+  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (fileMatch) return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`;
+  const openMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
+  if (openMatch) return `https://drive.google.com/uc?export=view&id=${openMatch[1]}`;
+  return url;
 }
 
 const defaultArticles: JournalArticle[] = [

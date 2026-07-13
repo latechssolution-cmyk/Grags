@@ -1,19 +1,15 @@
 import { useState, useMemo, useEffect, useCallback, type ElementType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen, LogOut, Eye, EyeOff, Lock, LayoutDashboard, TrendingUp, BarChart2, AlertTriangle, BookOpen, Globe } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen, LogOut, Eye, EyeOff, Lock, LayoutDashboard, TrendingUp, BarChart2, AlertTriangle, BookOpen, Globe, Check } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import logo from "@/assets/logo.png";
-import { useProducts, Product, ColorVariant, generateProductCode } from "@/store/productStore";
+import { useProducts, Product, ColorVariant, generateProductCode, SizeChart, variantStockKey } from "@/store/productStore";
 import { useHero, useFabric } from "@/store/heroStore";
 import { useOrders, OrderStatus } from "@/store/orderStore";
-import { useSettings, CouponCode, Collection, SizeChart } from "@/store/settingsStore";
+import { useSettings, CouponCode, Collection, Section } from "@/store/settingsStore";
 import { useJournal, JournalArticle } from "@/store/journalStore";
 import OrderDetailsModal from "@/components/OrderDetailsModal";
 import { Order } from "@/store/orderStore";
-
-const EMAILJS_SERVICE_ID  = "service_lzhp8t6";
-const EMAILJS_TEMPLATE_ID = "template_mq2zq75";
-const EMAILJS_PUBLIC_KEY  = "bNSf_ytdwdT2A38I8";
 
 const ALL_TAGS = ["NEW IN", "SUMMER", "WINTER", "TOPS", "BOTTOMS", "ESSENTIALS", "HERITAGE"];
 const PREDEFINED_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -51,20 +47,8 @@ const StatCard = ({
   </div>
 );
 
-// ─── Inject EmailJS SDK once ──────────────────────────────
-const initEmailJS = (): Promise<void> =>
-  new Promise((resolve) => {
-    if ((window as any).emailjs) { resolve(); return; }
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
-    s.onload = () => { (window as any).emailjs.init(EMAILJS_PUBLIC_KEY); resolve(); };
-    document.head.appendChild(s);
-  });
-
-// ─── Send Status Email via EmailJS ───────────────────────
+// ─── Send Status Email via Brevo (netlify/functions/send-email.cjs) ──
 const sendStatusEmail = async (status: OrderStatus, order: any): Promise<boolean> => {
-  await initEmailJS();
-
   const subjects: Record<OrderStatus, string> = {
     Pending:   `Your GRAGS Order #${order.id} is Pending`,
     Confirmed: `Your GRAGS Order #${order.id} Has Been Confirmed ✅`,
@@ -140,19 +124,14 @@ const sendStatusEmail = async (status: OrderStatus, order: any): Promise<boolean
 </div>`;
 
   try {
-    const result = await (window as any).emailjs.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_ID,
-      {
-        to_email: order.email,
-        to_name:  order.customerName,
-        subject:  subjects[status],
-        message,
-      }
-    );
-    return result.status === 200;
+    const res = await fetch("/.netlify/functions/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to: order.email, subject: subjects[status], html: message }),
+    });
+    return res.ok;
   } catch (err: any) {
-    console.error("EmailJS error:", err);
+    console.error("send-email error:", err);
     return false;
   }
 };
@@ -163,11 +142,13 @@ const ProductForm = ({
   onSave,
   onCancel,
   availableCollections,
+  collectionsData,
 }: {
   initial?: Product;
   onSave: (p: Product) => void;
   onCancel: () => void;
   availableCollections: string[];
+  collectionsData: Collection[];
 }) => {
   const [form, setForm] = useState<Product>(
     initial ?? {
@@ -189,6 +170,8 @@ const ProductForm = ({
       careInstructions: [],
       showInstallments: true,
       installments: 4,
+      keywords: [],
+      orderType: "order",
     }
   );
   const [sizeInput, setSizeInput] = useState("");
@@ -229,6 +212,24 @@ const ProductForm = ({
       <div><label className={labelCls}>Badge Label</label><input value={form.tag ?? ""} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value || null }))} placeholder="e.g. Best Seller, New, Limited" className={inputCls} /></div>
       <div><label className={labelCls}>Description</label><textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={3} className={`${inputCls} resize-none`} /></div>
       <div>
+        <label className={labelCls}>Order Type</label>
+        <div className="flex gap-2 mt-1">
+          <button
+            onClick={() => setForm((f) => ({ ...f, orderType: "order" }))}
+            className={`px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans border transition-colors ${(form.orderType ?? "order") === "order" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:border-foreground"}`}
+          >
+            Regular Order
+          </button>
+          <button
+            onClick={() => setForm((f) => ({ ...f, orderType: "preorder" }))}
+            className={`px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans border transition-colors ${form.orderType === "preorder" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:border-foreground"}`}
+          >
+            Pre-Order
+          </button>
+        </div>
+        <p className="text-[10px] text-muted-foreground font-sans mt-1">Pre-order items show a "Pre-Order" badge and accept both COD and Bank Transfer, same as regular orders.</p>
+      </div>
+      <div>
         <label className={labelCls}>Category Tags</label>
         <div className="flex flex-wrap gap-2 mt-1">
           {ALL_TAGS.map((tag) => (
@@ -244,6 +245,33 @@ const ProductForm = ({
           ))}
         </div>
       </div>
+      {(() => {
+        const availableSections = collectionsData
+          .filter((c) => form.collections.includes(c.name))
+          .flatMap((c) => c.sections ?? []);
+        if (availableSections.length === 0) return null;
+        return (
+          <div>
+            <label className={labelCls}>Section <span className="text-muted-foreground normal-case">(within the selected collection)</span></label>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {availableSections.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setForm((f) => ({
+                    ...f,
+                    sectionIds: (f.sectionIds ?? []).includes(s.id)
+                      ? (f.sectionIds ?? []).filter((id) => id !== s.id)
+                      : [...(f.sectionIds ?? []), s.id],
+                  }))}
+                  className={`px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans border transition-colors duration-200 ${(form.sectionIds ?? []).includes(s.id) ? "bg-foreground text-background border-foreground" : "bg-transparent text-muted-foreground border-border hover:border-foreground"}`}
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
       <div>
         <label className={labelCls}>Sizes</label>
         {/* Mode toggle */}
@@ -341,6 +369,21 @@ const ProductForm = ({
             className={`${inputCls} resize-none`}
           />
           <p className="text-[10px] text-muted-foreground font-sans mt-1">Each line becomes one bullet point on the product page.</p>
+        </div>
+        <div>
+          <label className={labelCls}>SEO Keywords</label>
+          <input
+            value={(form.keywords ?? []).join(", ")}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                keywords: e.target.value.split(",").map((k) => k.trim()).filter(Boolean),
+              }))
+            }
+            placeholder="polo shirt, mens fashion, pakistan"
+            className={inputCls}
+          />
+          <p className="text-[10px] text-muted-foreground font-sans mt-1">Comma-separated. Used for this product's search/SEO meta tags.</p>
         </div>
 
         {/* Discount */}
@@ -475,6 +518,156 @@ const ProductForm = ({
             <Plus className="w-3 h-3" /> Add Variant
           </button>
         </div>
+      </div>
+
+      {/* ── Stock by Size & Color ────────────────────────────── */}
+      {form.sizes.length > 0 && (form.colorVariants ?? []).length > 0 && (
+        <div className="space-y-3 border-t border-border pt-4">
+          <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Stock by Size & Color</p>
+          <p className="text-[10px] text-muted-foreground font-sans">Leave blank to fall back to the overall Stock value above.</p>
+          <div className="overflow-x-auto">
+            <table className="text-xs font-sans border-collapse">
+              <thead>
+                <tr>
+                  <th className="text-left px-3 py-2 border border-border bg-secondary text-muted-foreground font-medium">Color \ Size</th>
+                  {form.sizes.map((s) => (
+                    <th key={s} className="px-3 py-2 border border-border bg-secondary text-muted-foreground font-medium">{s}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(form.colorVariants ?? []).map((v) => (
+                  <tr key={v.name}>
+                    <td className="px-3 py-2 border border-border text-foreground">{v.name}</td>
+                    {form.sizes.map((s) => {
+                      const key = variantStockKey(v.name, s);
+                      return (
+                        <td key={s} className="border border-border p-1">
+                          <input
+                            type="number"
+                            min={0}
+                            value={form.variantStock?.[key] ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value === "" ? undefined : Number(e.target.value);
+                              setForm((f) => {
+                                const next = { ...(f.variantStock ?? {}) };
+                                if (val === undefined) delete next[key];
+                                else next[key] = val;
+                                return { ...f, variantStock: next };
+                              });
+                            }}
+                            placeholder={String(form.stock)}
+                            className="w-16 bg-transparent px-2 py-1 text-center text-xs font-sans focus:outline-none"
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── Size Chart (per product) ────────────────────────── */}
+      <div className="space-y-3 border-t border-border pt-4">
+        <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Size Chart</p>
+        <div>
+          <label className={labelCls}>Size Chart Image</label>
+          <p className="text-[10px] text-muted-foreground font-sans mb-1.5">Upload an image to use instead of a table — takes priority if set.</p>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onloadend = () => setForm((f) => ({ ...f, sizeChartImage: reader.result as string }));
+              reader.readAsDataURL(file);
+            }}
+            className="text-sm font-sans text-muted-foreground"
+          />
+          {form.sizeChartImage && (
+            <div className="mt-2 flex items-start gap-2">
+              <img src={form.sizeChartImage} alt="Size chart preview" className="w-40 border border-border" />
+              <button onClick={() => setForm((f) => ({ ...f, sizeChartImage: "" }))} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!form.sizeChartImage && (
+          <div>
+            <label className={labelCls}>Size Chart Table (optional)</label>
+            <p className="text-[10px] text-muted-foreground font-sans mb-1.5">Leave empty to show the default generic size guide.</p>
+            <input
+              value={(form.sizeChart?.headers ?? []).join(", ")}
+              onChange={(e) => {
+                const headers = e.target.value.split(",").map((h) => h.trim()).filter(Boolean);
+                setForm((f) => {
+                  const rows = f.sizeChart?.rows ?? [];
+                  return {
+                    ...f,
+                    sizeChart: {
+                      headers,
+                      rows: rows.map((row) => ({ ...row, values: headers.slice(1).map((_, i) => row.values[i] ?? "") })),
+                    },
+                  };
+                });
+              }}
+              className={inputCls}
+              placeholder="Size, Chest (inches), Length (inches)"
+            />
+            <div className="space-y-2 mt-2">
+              {(form.sizeChart?.rows ?? []).map((row, ri) => (
+                <div key={ri} className="flex items-center gap-2">
+                  <input
+                    value={row.size}
+                    onChange={(e) => setForm((f) => ({
+                      ...f,
+                      sizeChart: { ...f.sizeChart!, rows: f.sizeChart!.rows.map((r, i) => i === ri ? { ...r, size: e.target.value } : r) },
+                    }))}
+                    placeholder="Size"
+                    className={`w-16 ${inputCls}`}
+                  />
+                  {(form.sizeChart?.headers ?? []).slice(1).map((_, ci) => (
+                    <input
+                      key={ci}
+                      value={row.values[ci] ?? ""}
+                      onChange={(e) => setForm((f) => ({
+                        ...f,
+                        sizeChart: {
+                          ...f.sizeChart!,
+                          rows: f.sizeChart!.rows.map((r, i) => i === ri ? { ...r, values: r.values.map((v, vi) => vi === ci ? e.target.value : v) } : r),
+                        },
+                      }))}
+                      placeholder={form.sizeChart?.headers[ci + 1]}
+                      className={`flex-1 ${inputCls}`}
+                    />
+                  ))}
+                  <button
+                    onClick={() => setForm((f) => ({ ...f, sizeChart: { ...f.sizeChart!, rows: f.sizeChart!.rows.filter((_, i) => i !== ri) } }))}
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1 flex-shrink-0"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => setForm((f) => {
+                  const headers = f.sizeChart?.headers?.length ? f.sizeChart.headers : ["Size", "Chest (inches)", "Length (inches)"];
+                  const rows = f.sizeChart?.rows ?? [];
+                  return { ...f, sizeChart: { headers, rows: [...rows, { size: "", values: headers.slice(1).map(() => "") }] } };
+                })}
+                className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors mt-1"
+              >
+                <Plus className="w-3 h-3" /> Add Row
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-3 pt-2">
@@ -615,7 +808,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   const { products, addProduct, updateProduct, deleteProduct } = useProducts();
   const { hero, updateHero, defaultImage } = useHero();
   const { fabric, updateFabric, defaultImage: fabricDefaultImage } = useFabric();
-  const { orders, updateStatus, deleteOrder } = useOrders();
+  const { orders, updateStatus, updateOrder, deleteOrder } = useOrders();
   const { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, addCollection, updateCollection, deleteCollection } = useSettings();
   const { articles, addArticle, updateArticle, deleteArticle } = useJournal();
 
@@ -640,9 +833,18 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
     coverImage: "",
     link: "",
     keywords: [],
+    imagePosition: "top",
   });
   const [articleForm, setArticleForm] = useState<JournalArticle>(emptyArticle());
-  const [collectionForm, setCollectionForm] = useState<Collection>({ id: "", name: "", title: "", subtitle: "", slug: "", imageUrl: "" });
+  const handleArticleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setArticleForm((f) => ({ ...f, coverImage: reader.result as string }));
+    reader.readAsDataURL(file);
+  };
+  const [collectionForm, setCollectionForm] = useState<Collection>({ id: "", name: "", title: "", subtitle: "", slug: "", imageUrl: "", sections: [] });
+  const [newSectionName, setNewSectionName] = useState("");
   const [orderSearch, setOrderSearch] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>("ALL");
   const [orderDateFilter, setOrderDateFilter] = useState("");
@@ -655,19 +857,12 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   const [senderEmail, setSenderEmail] = useState(settings.senderEmail ?? "");
   const [storeLocation, setStoreLocation] = useState(settings.storeLocation ?? "");
   const [googleMapsUrl, setGoogleMapsUrl] = useState(settings.googleMapsUrl ?? "");
-  const [sizeChart, setSizeChart] = useState<SizeChart>(settings.sizeChart ?? {
-    headers: ["Size", "Chest (inches)", "Length (inches)", "Shoulder (inches)"],
-    rows: [
-      { size: "S",  values: ["36–38", "28", "17"] },
-      { size: "M",  values: ["38–40", "29", "17.5"] },
-      { size: "L",  values: ["40–42", "30", "18"] },
-      { size: "XL", values: ["42–44", "31", "18.5"] },
-    ],
-  });
+  const [trackOrderUrl, setTrackOrderUrl] = useState(settings.trackOrderUrl ?? "");
+  const [instagramUrl, setInstagramUrl] = useState(settings.instagramUrl ?? "");
+  const [facebookUrl, setFacebookUrl] = useState(settings.facebookUrl ?? "");
+  const [bankAccountDetails, setBankAccountDetails] = useState(settings.bankAccountDetails ?? "");
+  const [stripeEnabled, setStripeEnabled] = useState(settings.stripeEnabled ?? false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-
-  // Pre-load EmailJS SDK on mount
-  useEffect(() => { initEmailJS(); }, []);
 
   // Re-sync settings form state when MongoDB data arrives asynchronously
   useEffect(() => {
@@ -676,7 +871,11 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
     setSenderEmail(settings.senderEmail ?? "");
     setStoreLocation(settings.storeLocation ?? "");
     setGoogleMapsUrl(settings.googleMapsUrl ?? "");
-    if (settings.sizeChart) setSizeChart(settings.sizeChart);
+    setTrackOrderUrl(settings.trackOrderUrl ?? "");
+    setInstagramUrl(settings.instagramUrl ?? "");
+    setFacebookUrl(settings.facebookUrl ?? "");
+    setBankAccountDetails(settings.bankAccountDetails ?? "");
+    setStripeEnabled(settings.stripeEnabled ?? false);
   }, [settings]);
 
   const showToast = (msg: string, ok = true) => {
@@ -692,6 +891,11 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
       success ? `✅ Email sent to ${order.email}` : `❌ Email failed — check console for details`,
       success
     );
+    // Bank transfer receipts are only needed to verify payment before confirmation —
+    // delete once the order is confirmed and the customer has been notified.
+    if (success && newStatus === "Confirmed" && order.receiptImage) {
+      updateOrder(orderId, { receiptImage: "" });
+    }
   };
 
   const filteredOrders = useMemo(() => {
@@ -778,15 +982,22 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
     text.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]+/g, "").replace(/--+/g, "-");
 
   const openAddCollection = () => {
-    setCollectionForm({ id: crypto.randomUUID(), name: "", title: "", subtitle: "", slug: "", imageUrl: "" });
+    setCollectionForm({ id: crypto.randomUUID(), name: "", title: "", subtitle: "", slug: "", imageUrl: "", sections: [] });
     setEditingCollection(null);
     setAddingCollection(true);
   };
 
   const openEditCollection = (col: Collection) => {
-    setCollectionForm({ ...col });
+    setCollectionForm({ sections: [], ...col });
     setEditingCollection(col);
     setAddingCollection(false);
+  };
+
+  const addSectionToForm = () => {
+    if (!newSectionName.trim()) return;
+    const section: Section = { id: crypto.randomUUID(), name: newSectionName.trim(), slug: slugify(newSectionName) };
+    setCollectionForm((f) => ({ ...f, sections: [...(f.sections ?? []), section] }));
+    setNewSectionName("");
   };
 
   const saveCollectionForm = () => {
@@ -1007,8 +1218,8 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
                 </div>
               </>
             )}
-            {addingProduct && <div><h2 className="text-2xl font-serif font-bold text-foreground mb-6">Add Product</h2><ProductForm availableCollections={availableCollections} onSave={(p) => { addProduct(p); setAddingProduct(false); }} onCancel={() => setAddingProduct(false)} /></div>}
-            {editingProduct && <div><h2 className="text-2xl font-serif font-bold text-foreground mb-6">Edit Product</h2><ProductForm availableCollections={availableCollections} initial={editingProduct} onSave={(p) => { updateProduct(p.id, p); setEditingProduct(null); }} onCancel={() => setEditingProduct(null)} /></div>}
+            {addingProduct && <div><h2 className="text-2xl font-serif font-bold text-foreground mb-6">Add Product</h2><ProductForm availableCollections={availableCollections} collectionsData={settings.collections ?? []} onSave={(p) => { addProduct(p); setAddingProduct(false); }} onCancel={() => setAddingProduct(false)} /></div>}
+            {editingProduct && <div><h2 className="text-2xl font-serif font-bold text-foreground mb-6">Edit Product</h2><ProductForm availableCollections={availableCollections} collectionsData={settings.collections ?? []} initial={editingProduct} onSave={(p) => { updateProduct(p.id, p); setEditingProduct(null); }} onCancel={() => setEditingProduct(null)} /></div>}
           </motion.div>
         )}
 
@@ -1228,6 +1439,32 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
                       <img src={collectionForm.imageUrl} alt="Preview" className="mt-2 w-24 h-28 object-cover border border-border" onError={(e) => (e.currentTarget.style.display = "none")} />
                     )}
                   </div>
+                  <div>
+                    <label className={labelCls}>Sections <span className="text-muted-foreground normal-case">(sub-groupings within this collection)</span></label>
+                    <div className="space-y-2 mb-2">
+                      {(collectionForm.sections ?? []).map((s) => (
+                        <div key={s.id} className="flex items-center justify-between px-3 py-2 bg-secondary border border-border text-sm">
+                          <span>{s.name}</span>
+                          <button
+                            onClick={() => setCollectionForm((f) => ({ ...f, sections: (f.sections ?? []).filter((x) => x.id !== s.id) }))}
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        value={newSectionName}
+                        onChange={(e) => setNewSectionName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && addSectionToForm()}
+                        placeholder="e.g. Signature Polos"
+                        className={`flex-1 ${inputCls}`}
+                      />
+                      <button onClick={addSectionToForm} className="px-3 py-1 bg-foreground text-background text-xs font-sans">Add</button>
+                    </div>
+                  </div>
                   <div className="flex gap-3 pt-2">
                     <button onClick={saveCollectionForm} className="flex items-center gap-2 px-6 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity">
                       <Save className="w-3 h-3" /> Save
@@ -1422,17 +1659,43 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
                     />
                   </div>
 
-                  {/* Cover Image URL */}
+                  {/* Cover Image */}
                   <div>
-                    <label className={labelCls}>Cover Image URL</label>
-                    <p className="text-[10px] text-muted-foreground font-sans mb-1.5">Paste a direct image URL to use as the article header image.</p>
+                    <label className={labelCls}>Cover Image</label>
+                    <p className="text-[10px] text-muted-foreground font-sans mb-1.5">Upload an image, or paste a direct image URL below.</p>
+                    <input type="file" accept="image/*" onChange={handleArticleImageUpload} className="text-sm font-sans text-muted-foreground" />
                     <input
                       value={articleForm.coverImage ?? ""}
                       onChange={(e) => setArticleForm((f) => ({ ...f, coverImage: e.target.value }))}
                       placeholder="https://example.com/image.jpg"
-                      className={inputCls}
+                      className={`${inputCls} mt-2`}
                     />
+                    {articleForm.coverImage && (
+                      <img src={articleForm.coverImage} alt="Preview" className="mt-2 w-full max-w-xs aspect-[16/7] object-cover border border-border" />
+                    )}
                   </div>
+
+                  {/* Image Placement */}
+                  {articleForm.coverImage && (
+                    <div>
+                      <label className={labelCls}>Image Placement</label>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {(["top", "bottom", "left", "right"] as const).map((pos) => (
+                          <button
+                            key={pos}
+                            onClick={() => setArticleForm((f) => ({ ...f, imagePosition: pos }))}
+                            className={`px-3 py-1 text-[10px] tracking-ultra-wide uppercase font-sans border transition-colors capitalize ${
+                              (articleForm.imagePosition ?? "top") === pos
+                                ? "bg-foreground text-background border-foreground"
+                                : "bg-transparent text-muted-foreground border-border hover:border-foreground"
+                            }`}
+                          >
+                            {pos}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* External Link */}
                   <div>
@@ -1549,76 +1812,62 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
               </div>
             </div>
 
-            {/* Size Chart */}
+            {/* Header / Footer Links */}
             <div className="space-y-4 border border-border p-5">
-              <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Size Chart</p>
-              <p className="text-xs text-muted-foreground font-sans">Edit the size guide shown on product pages. First column is always "Size".</p>
-
-              {/* Headers */}
+              <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Header / Footer Links</p>
               <div>
-                <label className={labelCls}>Column Headers (comma-separated)</label>
-                <input
-                  value={sizeChart.headers.join(", ")}
-                  onChange={(e) => {
-                    const headers = e.target.value.split(",").map((h) => h.trim()).filter(Boolean);
-                    setSizeChart((sc) => ({
-                      ...sc,
-                      headers,
-                      rows: sc.rows.map((row) => ({
-                        ...row,
-                        values: headers.slice(1).map((_, i) => row.values[i] ?? ""),
-                      })),
-                    }));
-                  }}
-                  className={inputCls}
-                  placeholder="Size, Chest (inches), Length (inches), Shoulder (inches)"
-                />
+                <label className={labelCls}>Track Order URL</label>
+                <p className="text-xs text-muted-foreground font-sans mb-2">Used by "Track Order" in the announcement bar, footer, and mobile menu</p>
+                <input value={trackOrderUrl} onChange={(e) => setTrackOrderUrl(e.target.value)} className={inputCls} placeholder="https://www.tcs.com.pk/tracking" />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>Instagram URL</label>
+                  <input value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} className={inputCls} placeholder="https://instagram.com/grags" />
+                </div>
+                <div>
+                  <label className={labelCls}>Facebook URL</label>
+                  <input value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} className={inputCls} placeholder="https://facebook.com/grags" />
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground font-sans">Social icons only appear in the footer once a URL is set.</p>
+            </div>
 
-              {/* Rows */}
-              <div className="space-y-2">
-                {sizeChart.rows.map((row, ri) => (
-                  <div key={ri} className="flex items-center gap-2">
-                    <input
-                      value={row.size}
-                      onChange={(e) => setSizeChart((sc) => ({ ...sc, rows: sc.rows.map((r, i) => i === ri ? { ...r, size: e.target.value } : r) }))}
-                      placeholder="Size"
-                      className={`w-16 ${inputCls}`}
-                    />
-                    {sizeChart.headers.slice(1).map((_, ci) => (
-                      <input
-                        key={ci}
-                        value={row.values[ci] ?? ""}
-                        onChange={(e) => setSizeChart((sc) => ({
-                          ...sc,
-                          rows: sc.rows.map((r, i) => i === ri ? { ...r, values: r.values.map((v, vi) => vi === ci ? e.target.value : v) } : r),
-                        }))}
-                        placeholder={sizeChart.headers[ci + 1]}
-                        className={`flex-1 ${inputCls}`}
-                      />
-                    ))}
-                    <button
-                      onClick={() => setSizeChart((sc) => ({ ...sc, rows: sc.rows.filter((_, i) => i !== ri) }))}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1 flex-shrink-0"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  onClick={() => setSizeChart((sc) => ({
-                    ...sc,
-                    rows: [...sc.rows, { size: "", values: sc.headers.slice(1).map(() => "") }],
-                  }))}
-                  className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors mt-1"
-                >
-                  <Plus className="w-3 h-3" /> Add Row
-                </button>
+            {/* Bank Account Details */}
+            <div className="space-y-4 border border-border p-5">
+              <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Bank Account Details</p>
+              <div>
+                <label className={labelCls}>Account Details</label>
+                <p className="text-xs text-muted-foreground font-sans mb-2">Shown to customers at checkout when they select Bank Transfer</p>
+                <textarea
+                  value={bankAccountDetails}
+                  onChange={(e) => setBankAccountDetails(e.target.value)}
+                  rows={4}
+                  placeholder={"Bank: Meezan Bank\nAccount Title: Grags\nAccount Number: 0123456789\nIBAN: PK00MEZN0000000123456789"}
+                  className={`${inputCls} resize-none`}
+                />
               </div>
             </div>
 
+            {/* Stripe */}
+            <div className="space-y-4 border border-border p-5">
+              <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Stripe (Card Payments)</p>
+              <label className="flex items-center gap-3 cursor-pointer w-fit">
+                <div
+                  onClick={() => setStripeEnabled((v) => !v)}
+                  className={`w-4 h-4 border flex items-center justify-center transition-colors ${stripeEnabled ? "bg-foreground border-foreground" : "border-border"}`}
+                >
+                  {stripeEnabled && <Check className="w-3 h-3 text-background" />}
+                </div>
+                <span className="text-sm">Show "Card" as a payment option at checkout</span>
+              </label>
+              <p className="text-[10px] text-muted-foreground font-sans">
+                Requires <code className="font-mono">STRIPE_SECRET_KEY</code> to be set as a Netlify environment variable — never enter your Stripe API key here or anywhere in this admin panel.
+              </p>
+            </div>
+
             <button
-              onClick={() => updateSettings({ whatsappNumber: whatsappNum, contactEmail, senderEmail, storeLocation, googleMapsUrl, sizeChart })}
+              onClick={() => updateSettings({ whatsappNumber: whatsappNum, contactEmail, senderEmail, storeLocation, googleMapsUrl, trackOrderUrl, instagramUrl, facebookUrl, bankAccountDetails, stripeEnabled })}
               className="flex items-center gap-2 px-6 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity"
             >
               <Save className="w-3 h-3" /> Save Settings

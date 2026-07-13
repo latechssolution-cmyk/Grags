@@ -14,6 +14,11 @@ const defaultSettings = {
   senderEmail: "",
   storeLocation: "",
   googleMapsUrl: "",
+  trackOrderUrl: "https://www.tcs.com.pk/tracking",
+  instagramUrl: "",
+  facebookUrl: "",
+  bankAccountDetails: "",
+  stripeEnabled: false,
   couponCodes: [
     { id: "1", code: "GRAGS10", discount: 10, type: "percentage", active: true },
     { id: "2", code: "WELCOME500", discount: 500, type: "fixed", active: true },
@@ -23,15 +28,6 @@ const defaultSettings = {
     { id: "2", name: "SIGNATURE COLLECTION", title: "Signature Collection", subtitle: "Exclusive Designs", slug: "signature-collection" },
     { id: "3", name: "WINTER COLLECTION", title: "Winter Collection", subtitle: "Cold Weather Essentials", slug: "winter-collection" },
   ],
-  sizeChart: {
-    headers: ["Size", "Chest (inches)", "Length (inches)", "Shoulder (inches)"],
-    rows: [
-      { size: "S",  values: ["36–38", "28", "17"] },
-      { size: "M",  values: ["38–40", "29", "17.5"] },
-      { size: "L",  values: ["40–42", "30", "18"] },
-      { size: "XL", values: ["42–44", "31", "18.5"] },
-    ],
-  },
 };
 
 exports.handler = async (event) => {

@@ -14,8 +14,10 @@ import NotFound from "./pages/NotFound";
 import CollectionPage from "./pages/CollectionPage";
 import ProductDetail from "./pages/ProductDetail";
 import CheckoutPage from "./pages/CheckoutPage";
+import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import { PrivacyPage, TermsPage, ContactPage } from "./pages/LegalPages";
 import JournalPage from "./pages/JournalPage";
+import JournalArticlePage from "./pages/JournalArticlePage";
 import Summer from "./pages/Summer";
 import Winter from "./pages/Winter";
 import ScrollToTop from "./components/ScrollToTop";
@@ -41,10 +43,12 @@ const App = () => (
           <Route path="/collections/:slug" element={<CollectionPage />} />
           <Route path="/product/:code" element={<ProductDetail />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/journal" element={<JournalPage />} />
+          <Route path="/journal/:slug" element={<JournalArticlePage />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

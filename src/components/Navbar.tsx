@@ -44,6 +44,9 @@ const AboutModal = ({ onClose }) => {
       if (res.ok) {
         setStatus("sent");
         setName(""); setEmail(""); setMessage("");
+        if (typeof window !== "undefined" && (window as any).fbq) {
+          (window as any).fbq("track", "Contact");
+        }
       } else {
         setStatus("error");
       }
@@ -474,14 +477,14 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
                     transition={{ delay: 0.6 }}
                   >
                     <a
-                      href="https://www.tcs.com.pk/tracking"
+                      href={settings.trackOrderUrl || "https://www.tcs.com.pk/tracking"}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2 text-sm font-sans text-foreground/80 hover:text-foreground transition-colors"
                     >
                       <Package className="w-4 h-4" />
-                      Track Your Order
+                      Track Order
                     </a>
                   </motion.div>
 

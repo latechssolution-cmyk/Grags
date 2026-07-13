@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Instagram, Facebook, MessageCircle } from "lucide-react";
 import { useSettings } from "@/store/settingsStore";
 
 const shopLinks = [
@@ -20,7 +21,7 @@ const Footer = () => {
   const { settings } = useSettings();
 
   const helpLinks = [
-    { label: "Track Order", href: "https://www.tcs.com.pk/tracking", external: true },
+    { label: "Track Order", href: settings.trackOrderUrl || "https://www.tcs.com.pk/tracking", external: true },
     { label: "WhatsApp", href: `https://wa.me/${settings.whatsappNumber}`, external: true },
     { label: "Contact Us", href: "/contact" },
     { label: "Journal", href: "/journal" },
@@ -38,11 +39,10 @@ const Footer = () => {
           {/* Brand col */}
           <div className="col-span-2 md:col-span-1">
             <h3 className="text-2xl font-roman font-bold tracking-ultra-wide text-foreground mb-4">
-              GRAGS
+              Grags
             </h3>
             <p className="text-sm font-sans text-muted-foreground leading-relaxed max-w-xs">
-              Heritage menswear for the modern gentleman. Crafted in Pakistan,
-              designed for the world.
+              Premium tailored menswear crafted in Pakistan. Wear the unique.
             </p>
             {settings.contactEmail && (
               <a
@@ -161,22 +161,39 @@ const Footer = () => {
         {/* Bottom */}
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs font-sans text-muted-foreground">
-            © {new Date().getFullYear()} GRAGS. All rights reserved.
+            © {new Date().getFullYear()} Grags. All rights reserved.
           </p>
-          <div className="flex gap-6">
-            <a href="#" className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors">
-              Instagram
-            </a>
-            <a href="#" className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors">
-              Facebook
-            </a>
+          <div className="flex gap-5">
+            {settings.instagramUrl && (
+              <a
+                href={settings.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Instagram className="w-4 h-4" />
+              </a>
+            )}
+            {settings.facebookUrl && (
+              <a
+                href={settings.facebookUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Facebook className="w-4 h-4" />
+              </a>
+            )}
             <a
               href={`https://wa.me/${settings.whatsappNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="WhatsApp"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              WhatsApp
+              <MessageCircle className="w-4 h-4" />
             </a>
           </div>
         </div>

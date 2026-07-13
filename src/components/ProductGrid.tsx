@@ -1,18 +1,9 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { useProducts, Product } from "@/store/productStore";
-import BookingModal from "@/components/BookingModal";
+import { useProducts } from "@/store/productStore";
 import { ProductCard } from "@/components/ProductCard";
 
 const ProductGrid = () => {
   const { products } = useProducts();
-  const [bookingProduct, setBookingProduct] = useState<Product | null>(null);
-  const [bookingVariantIdx, setBookingVariantIdx] = useState(0);
-
-  const handleBook = (p: Product, variantIdx: number) => {
-    setBookingProduct(p);
-    setBookingVariantIdx(variantIdx);
-  };
 
   return (
     <>
@@ -37,19 +28,10 @@ const ProductGrid = () => {
               key={product.id}
               product={product}
               index={i}
-              onBook={handleBook}
             />
           ))}
         </div>
       </section>
-
-      {bookingProduct && (
-        <BookingModal
-          product={bookingProduct}
-          selectedVariantIdx={bookingVariantIdx}
-          onClose={() => setBookingProduct(null)}
-        />
-      )}
     </>
   );
 };

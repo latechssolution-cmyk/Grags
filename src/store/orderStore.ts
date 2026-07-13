@@ -36,6 +36,8 @@ export interface Order {
   total: string;
   date: string;
   status: OrderStatus;
+  receiptImage?: string;
+  paid?: boolean;
 }
 
 const STORAGE_KEY = "graggs_orders";
@@ -108,9 +110,9 @@ export function useOrders() {
     return () => { listeners.delete(handler); };
   }, []);
 
-  const updateStatus = useCallback((id: string, status: OrderStatus) => {
+  const updateOrder = useCallback((id: string, data: Partial<Order>) => {
     const current = load();
-    const next = current.map((o) => (o.id === id ? { ...o, status } : o));
+    const next = current.map((o) => (o.id === id ? { ...o, ...data } : o));
     saveOrders(next);
     setOrders(next);
     notify();
@@ -118,11 +120,15 @@ export function useOrders() {
     fetch(`/.netlify/functions/orders?id=${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(data),
     })
       .then((res) => res.json())
-      .catch((err) => console.error("Error updating order status in MongoDB:", err));
+      .catch((err) => console.error("Error updating order in MongoDB:", err));
   }, []);
+
+  const updateStatus = useCallback((id: string, status: OrderStatus) => {
+    updateOrder(id, { status });
+  }, [updateOrder]);
 
   const addOrder = useCallback((order: Order) => {
     const current = load();
@@ -152,5 +158,5 @@ export function useOrders() {
     }).catch((err) => console.error("Error deleting order from MongoDB:", err));
   }, []);
 
-  return { orders, updateStatus, addOrder, deleteOrder };
+  return { orders, updateStatus, updateOrder, addOrder, deleteOrder };
 }

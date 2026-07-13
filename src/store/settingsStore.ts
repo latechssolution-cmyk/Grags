@@ -8,6 +8,12 @@ export interface CouponCode {
   active: boolean;
 }
 
+export interface Section {
+  id: string;
+  name: string; // display name, e.g. "Signature Polos"
+  slug: string; // anchor/URL segment within the collection page
+}
+
 export interface Collection {
   id: string;
   name: string;      // value stored on products, e.g. "MENS POLO"
@@ -15,16 +21,7 @@ export interface Collection {
   subtitle: string;  // display subheading, e.g. "Classic Collection"
   slug: string;      // URL segment, e.g. "mens-polo"
   imageUrl?: string; // optional cover image URL
-}
-
-export interface SizeChartRow {
-  size: string;
-  values: string[];
-}
-
-export interface SizeChart {
-  headers: string[];
-  rows: SizeChartRow[];
+  sections?: Section[]; // sub-groupings within this collection
 }
 
 export interface SiteSettings {
@@ -33,9 +30,13 @@ export interface SiteSettings {
   senderEmail?: string;
   storeLocation?: string;
   googleMapsUrl?: string;
+  trackOrderUrl?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  bankAccountDetails?: string;
+  stripeEnabled?: boolean;
   couponCodes: CouponCode[];
   collections: Collection[];
-  sizeChart?: SizeChart;
 }
 
 const defaultSettings: SiteSettings = {
@@ -44,6 +45,11 @@ const defaultSettings: SiteSettings = {
   senderEmail: "",
   storeLocation: "",
   googleMapsUrl: "",
+  trackOrderUrl: "https://www.tcs.com.pk/tracking",
+  instagramUrl: "",
+  facebookUrl: "",
+  bankAccountDetails: "",
+  stripeEnabled: false,
   couponCodes: [
     { id: "1", code: "GRAGS10", discount: 10, type: "percentage", active: true },
     { id: "2", code: "WELCOME500", discount: 500, type: "fixed", active: true },
@@ -53,15 +59,6 @@ const defaultSettings: SiteSettings = {
     { id: "2", name: "SIGNATURE COLLECTION", title: "Signature Collection", subtitle: "Exclusive Designs", slug: "signature-collection" },
     { id: "3", name: "WINTER COLLECTION", title: "Winter Collection", subtitle: "Cold Weather Essentials", slug: "winter-collection" },
   ],
-  sizeChart: {
-    headers: ["Size", "Chest (inches)", "Length (inches)", "Shoulder (inches)"],
-    rows: [
-      { size: "S",  values: ["36–38", "28", "17"] },
-      { size: "M",  values: ["38–40", "29", "17.5"] },
-      { size: "L",  values: ["40–42", "30", "18"] },
-      { size: "XL", values: ["42–44", "31", "18.5"] },
-    ],
-  },
 };
 
 const STORAGE_KEY = "graggs_settings";
@@ -75,7 +72,6 @@ function load(): SiteSettings {
         ...defaultSettings,
         ...parsed,
         collections: parsed.collections ?? defaultSettings.collections,
-        sizeChart: parsed.sizeChart ?? defaultSettings.sizeChart,
       };
     }
   } catch {}
@@ -106,7 +102,6 @@ export function useSettings() {
             ...defaultSettings,
             ...data,
             collections: data.collections ?? defaultSettings.collections,
-            sizeChart: data.sizeChart ?? defaultSettings.sizeChart,
           };
           saveSettings(merged);
           setSettings(merged);

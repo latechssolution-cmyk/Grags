@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useJournal, JournalArticle } from "@/store/journalStore";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useJournal, getArticleUrl, resolveImageUrl } from "@/store/journalStore";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -19,124 +19,9 @@ function tagClass(tag: string) {
   return TAG_COLORS[tag] ?? "text-muted-foreground border-border bg-secondary";
 }
 
-// Render markdown-lite: **bold**, newlines → paragraphs
-function renderContent(text: string) {
-  return text.split("\n\n").map((para, i) => {
-    if (para.startsWith("**") && para.endsWith("**")) {
-      return (
-        <h3 key={i} className="text-sm font-sans font-semibold text-foreground tracking-wide mt-6 mb-2">
-          {para.replace(/\*\*/g, "")}
-        </h3>
-      );
-    }
-    const parts = para.split(/(\*\*[^*]+\*\*)/g);
-    return (
-      <p key={i} className="text-sm font-sans text-muted-foreground leading-7">
-        {parts.map((part, j) =>
-          part.startsWith("**") && part.endsWith("**")
-            ? <strong key={j} className="text-foreground font-semibold">{part.replace(/\*\*/g, "")}</strong>
-            : part
-        )}
-      </p>
-    );
-  });
-}
-
-// ── Article Reader Modal ─────────────────────────────────
-const ArticleReader = ({ article, onClose }: { article: JournalArticle; onClose: () => void }) => (
-  <AnimatePresence>
-    <motion.div
-      className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto py-10 px-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <motion.div
-        className="absolute inset-0 bg-background/95 backdrop-blur-md"
-        onClick={onClose}
-      />
-      <motion.article
-        className="relative z-10 w-full max-w-2xl bg-background border border-border p-8 md:p-12 my-auto"
-        initial={{ opacity: 0, y: 32 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 32 }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-1 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Close"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        {/* Meta */}
-        <div className="flex items-center gap-3 mb-6">
-          <span className={`text-[9px] tracking-ultra-wide uppercase font-sans border px-2 py-0.5 ${tagClass(article.tag)}`}>
-            {article.tag}
-          </span>
-          <span className="text-[10px] font-sans text-muted-foreground/60">{article.date}</span>
-        </div>
-
-        {/* Title */}
-        <h1 className="text-2xl md:text-3xl font-serif font-bold text-foreground leading-tight mb-6">
-          {article.title}
-        </h1>
-
-        {/* Cover image */}
-        {article.coverImage && (
-          <img
-            src={article.coverImage}
-            alt={article.title}
-            className="w-full aspect-[16/7] object-cover mb-6"
-          />
-        )}
-
-        <div className="h-px bg-border mb-8" />
-
-        {/* Content */}
-        <div className="space-y-4">
-          {renderContent(article.content || article.excerpt)}
-        </div>
-
-        {/* Keywords */}
-        {(article.keywords ?? []).length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-8 pt-6 border-t border-border">
-            {(article.keywords ?? []).map((kw) => (
-              <span key={kw} className="text-[9px] tracking-ultra-wide uppercase font-sans border border-border px-2 py-0.5 text-muted-foreground">
-                {kw}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* External link */}
-        {article.link && (
-          <a
-            href={article.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-6 inline-flex items-center gap-1.5 text-[10px] tracking-ultra-wide uppercase font-sans text-foreground border border-foreground px-4 py-2 hover:bg-foreground hover:text-background transition-colors"
-          >
-            Read More ↗
-          </a>
-        )}
-
-        <button
-          onClick={onClose}
-          className="mt-8 flex items-center gap-1.5 text-[10px] tracking-ultra-wide uppercase font-sans text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronLeft className="w-3 h-3" /> Back to Journal
-        </button>
-      </motion.article>
-    </motion.div>
-  </AnimatePresence>
-);
-
 // ── Journal Page ─────────────────────────────────────────
 const JournalPage = () => {
   const { articles } = useJournal();
-  const [selected, setSelected] = useState<JournalArticle | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const published = articles.filter((a) => a.published);
@@ -212,10 +97,9 @@ const JournalPage = () => {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.07 }}
-                className="group border-t border-border last:border-b py-8 cursor-pointer"
-                onClick={() => setSelected(article)}
+                className="group border-t border-border last:border-b py-8"
               >
-                <div className="flex items-start justify-between gap-6">
+                <Link to={getArticleUrl(article)} className="flex items-start justify-between gap-6">
                   <div className="flex-1 min-w-0">
                     {/* Tag + date */}
                     <div className="flex items-center gap-3 mb-3">
@@ -239,11 +123,11 @@ const JournalPage = () => {
                   {/* Cover image thumbnail or arrow */}
                   <div className="flex-shrink-0 pt-1 flex items-center gap-3">
                     {article.coverImage && (
-                      <img src={article.coverImage} alt="" className="w-16 h-16 object-cover hidden sm:block opacity-80 group-hover:opacity-100 transition-opacity" />
+                      <img src={resolveImageUrl(article.coverImage)} alt="" className="w-16 h-16 object-cover hidden sm:block opacity-80 group-hover:opacity-100 transition-opacity" />
                     )}
                     <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all duration-200" />
                   </div>
-                </div>
+                </Link>
               </motion.article>
             ))}
           </div>
@@ -251,11 +135,6 @@ const JournalPage = () => {
       </main>
 
       <Footer />
-
-      {/* Article reader */}
-      {selected && (
-        <ArticleReader article={selected} onClose={() => setSelected(null)} />
-      )}
     </div>
   );
 };
