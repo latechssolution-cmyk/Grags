@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, type ElementType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen, LogOut, Eye, EyeOff, Lock, LayoutDashboard, TrendingUp, BarChart2, AlertTriangle, BookOpen, Globe, Check } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, ShoppingCart, Image, Search, X, Save, Settings, Tag, Film, FolderOpen, LogOut, Eye, EyeOff, Lock, LayoutDashboard, TrendingUp, BarChart2, AlertTriangle, BookOpen, Globe } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import logo from "@/assets/logo.png";
 import { useProducts, Product, ColorVariant, generateProductCode, SizeChart, variantStockKey } from "@/store/productStore";
@@ -861,7 +861,6 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   const [instagramUrl, setInstagramUrl] = useState(settings.instagramUrl ?? "");
   const [facebookUrl, setFacebookUrl] = useState(settings.facebookUrl ?? "");
   const [bankAccountDetails, setBankAccountDetails] = useState(settings.bankAccountDetails ?? "");
-  const [stripeEnabled, setStripeEnabled] = useState(settings.stripeEnabled ?? false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   // Re-sync settings form state when MongoDB data arrives asynchronously
@@ -875,7 +874,6 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
     setInstagramUrl(settings.instagramUrl ?? "");
     setFacebookUrl(settings.facebookUrl ?? "");
     setBankAccountDetails(settings.bankAccountDetails ?? "");
-    setStripeEnabled(settings.stripeEnabled ?? false);
   }, [settings]);
 
   const showToast = (msg: string, ok = true) => {
@@ -1849,25 +1847,8 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
               </div>
             </div>
 
-            {/* Stripe */}
-            <div className="space-y-4 border border-border p-5">
-              <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Stripe (Card Payments)</p>
-              <label className="flex items-center gap-3 cursor-pointer w-fit">
-                <div
-                  onClick={() => setStripeEnabled((v) => !v)}
-                  className={`w-4 h-4 border flex items-center justify-center transition-colors ${stripeEnabled ? "bg-foreground border-foreground" : "border-border"}`}
-                >
-                  {stripeEnabled && <Check className="w-3 h-3 text-background" />}
-                </div>
-                <span className="text-sm">Show "Card" as a payment option at checkout</span>
-              </label>
-              <p className="text-[10px] text-muted-foreground font-sans">
-                Requires <code className="font-mono">STRIPE_SECRET_KEY</code> to be set as a Netlify environment variable — never enter your Stripe API key here or anywhere in this admin panel.
-              </p>
-            </div>
-
             <button
-              onClick={() => updateSettings({ whatsappNumber: whatsappNum, contactEmail, senderEmail, storeLocation, googleMapsUrl, trackOrderUrl, instagramUrl, facebookUrl, bankAccountDetails, stripeEnabled })}
+              onClick={() => updateSettings({ whatsappNumber: whatsappNum, contactEmail, senderEmail, storeLocation, googleMapsUrl, trackOrderUrl, instagramUrl, facebookUrl, bankAccountDetails })}
               className="flex items-center gap-2 px-6 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity"
             >
               <Save className="w-3 h-3" /> Save Settings

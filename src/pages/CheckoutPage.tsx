@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, ShoppingBag, Tag, CheckCircle, Upload, CreditCard } from "lucide-react";
+import { ChevronLeft, ShoppingBag, Tag, CheckCircle, Upload } from "lucide-react";
 import { useCart } from "@/store/cartStore";
 import { useOrders } from "@/store/orderStore";
 import { useSettings } from "@/store/settingsStore";
 
-type PaymentMethod = "COD" | "Bank Transfer" | "Card";
+type PaymentMethod = "COD" | "Bank Transfer";
 type ShippingMethod = "Standard" | "Express";
 
 const BANK_TRANSFER_DISCOUNT = 200;
@@ -65,8 +65,6 @@ export default function CheckoutPage() {
   const [placed, setPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [receiptImage, setReceiptImage] = useState("");
-  const [redirecting, setRedirecting] = useState(false);
-  const [stripeError, setStripeError] = useState("");
 
   const set = (key: keyof FormData) => (v: string | boolean) =>
     setForm((f) => ({ ...f, [key]: v }));
@@ -115,7 +113,7 @@ export default function CheckoutPage() {
     setCouponResult(result);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0 || receiptRequired) return;
 
@@ -141,39 +139,6 @@ export default function CheckoutPage() {
     };
 
     addOrder(order);
-
-    if (form.paymentMethod === "Card") {
-      setStripeError("");
-      setRedirecting(true);
-      try {
-        const res = await fetch("/.netlify/functions/stripe-checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: id,
-            email: form.email,
-            currency: "PKR",
-            shippingCost,
-            items: items.map((i) => ({
-              name: i.name,
-              price: parseInt(i.price.replace(/[^0-9]/g, "")) || 0,
-              quantity: i.quantity,
-            })),
-          }),
-        });
-        const data = await res.json();
-        if (data.url) {
-          clear();
-          window.location.href = data.url;
-          return;
-        }
-        setStripeError(data.error || "Could not start payment. Please try again.");
-      } catch {
-        setStripeError("Could not start payment. Please try again.");
-      }
-      setRedirecting(false);
-      return;
-    }
 
     if (typeof window !== "undefined" && (window as any).gtag) {
       (window as any).gtag("event", "purchase", {
@@ -345,11 +310,7 @@ export default function CheckoutPage() {
                   Payment Method
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {([
-                    "COD",
-                    "Bank Transfer",
-                    ...(settings.stripeEnabled ? ["Card" as PaymentMethod] : []),
-                  ] as PaymentMethod[]).map((m) => (
+                  {(["COD", "Bank Transfer"] as PaymentMethod[]).map((m) => (
                     <label
                       key={m}
                       className={`flex items-center gap-3 border px-4 py-3.5 cursor-pointer transition-colors ${
@@ -359,10 +320,7 @@ export default function CheckoutPage() {
                       <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${form.paymentMethod === m ? "border-foreground" : "border-foreground/30"}`}>
                         {form.paymentMethod === m && <div className="w-2 h-2 rounded-full bg-foreground" />}
                       </div>
-                      <span className="text-sm flex items-center gap-1.5">
-                        {m === "Card" && <CreditCard size={13} />}
-                        {m === "Card" ? "Card (Stripe)" : m}
-                      </span>
+                      <span className="text-sm">{m}</span>
                       {m === "Bank Transfer" && (
                         <span className="ml-auto text-[10px] tracking-wide uppercase text-green-600 border border-green-600/30 px-1.5 py-0.5">
                           Save PKR {BANK_TRANSFER_DISCOUNT}
@@ -502,16 +460,13 @@ export default function CheckoutPage() {
 
                 <button
                   type="submit"
-                  disabled={receiptRequired || redirecting}
+                  disabled={receiptRequired}
                   className="w-full bg-foreground text-background text-xs tracking-widest uppercase font-semibold py-4 hover:bg-foreground/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {redirecting ? "Redirecting to Payment..." : form.paymentMethod === "Card" ? "Pay with Card" : "Place Order"}
+                  Place Order
                 </button>
                 {receiptRequired && (
                   <p className="text-xs text-destructive text-center">Attach your payment receipt to continue.</p>
-                )}
-                {stripeError && (
-                  <p className="text-xs text-destructive text-center">{stripeError}</p>
                 )}
               </div>
             </div>

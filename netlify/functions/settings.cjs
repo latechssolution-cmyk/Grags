@@ -18,7 +18,6 @@ const defaultSettings = {
   instagramUrl: "",
   facebookUrl: "",
   bankAccountDetails: "",
-  stripeEnabled: false,
   couponCodes: [
     { id: "1", code: "GRAGS10", discount: 10, type: "percentage", active: true },
     { id: "2", code: "WELCOME500", discount: 500, type: "fixed", active: true },
