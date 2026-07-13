@@ -316,10 +316,9 @@ const AboutModal = ({ onClose }) => {
 const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<string | null>(null);
-  const [cartOpen, setCartOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const { settings } = useSettings();
-  const { count } = useCart();
+  const { count, isDrawerOpen, openDrawer, closeDrawer } = useCart();
 
   const openModal = (modal: string) => {
     setMenuOpen(false);
@@ -382,7 +381,7 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
 
             {/* Cart */}
             <button
-              onClick={() => setCartOpen(true)}
+              onClick={openDrawer}
               aria-label="Cart"
               className="relative p-2 rounded-full hover:bg-foreground/10 transition-colors"
             >
@@ -406,7 +405,7 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
         </div>
       </nav>
 
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+      <CartDrawer open={isDrawerOpen} onClose={closeDrawer} />
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
 
       {/* Mobile Menu */}

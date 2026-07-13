@@ -7,7 +7,7 @@ interface SEOOptions {
   image?: string;
 }
 
-const DEFAULT_TITLE = "Grags — Wear The Unique";
+const DEFAULT_TITLE = "Grags";
 const DEFAULT_DESCRIPTION = "Grags — premium tailored menswear crafted in Pakistan. Wear the unique.";
 const DEFAULT_IMAGE = "https://grags.shop/logo.png";
 

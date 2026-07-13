@@ -28,14 +28,30 @@ function save(items: CartItem[]) {
 const listeners = new Set<() => void>();
 function notify() { listeners.forEach((l) => l()); }
 
+// Shared cart-drawer open state — lets any component (e.g. a product page's
+// "Open Cart" button) toggle the drawer that Navbar renders.
+let drawerOpen = false;
+const drawerListeners = new Set<() => void>();
+function notifyDrawer() { drawerListeners.forEach((l) => l()); }
+
 export function useCart() {
   const [items, setItems] = useState<CartItem[]>(load);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(drawerOpen);
 
   useEffect(() => {
     const handler = () => setItems(load());
     listeners.add(handler);
     return () => { listeners.delete(handler); };
   }, []);
+
+  useEffect(() => {
+    const handler = () => setIsDrawerOpen(drawerOpen);
+    drawerListeners.add(handler);
+    return () => { drawerListeners.delete(handler); };
+  }, []);
+
+  const openDrawer = useCallback(() => { drawerOpen = true; notifyDrawer(); }, []);
+  const closeDrawer = useCallback(() => { drawerOpen = false; notifyDrawer(); }, []);
 
   const update = useCallback((updater: (prev: CartItem[]) => CartItem[]) => {
     const next = updater(load());
@@ -76,5 +92,5 @@ export function useCart() {
     return sum + num * i.quantity;
   }, 0);
 
-  return { items, count, subtotal, addItem, updateQty, removeItem, clear };
+  return { items, count, subtotal, addItem, updateQty, removeItem, clear, isDrawerOpen, openDrawer, closeDrawer };
 }

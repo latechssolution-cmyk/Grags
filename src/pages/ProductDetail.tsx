@@ -350,7 +350,7 @@ const ProductDetail = () => {
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [cartAdded, setCartAdded] = useState(false);
   const [sizeError, setSizeError] = useState(false);
-  const { addItem } = useCart();
+  const { addItem, openDrawer } = useCart();
 
   // Review form state
   const [reviewName, setReviewName] = useState("");
@@ -659,6 +659,12 @@ const ProductDetail = () => {
                 ) : (
                   <><ShoppingBag className="w-3.5 h-3.5" /> Add to Cart</>
                 )}
+              </button>
+              <button
+                onClick={openDrawer}
+                className="w-full py-3 border border-foreground text-foreground text-xs tracking-ultra-wide uppercase font-sans font-semibold hover:bg-foreground hover:text-background transition-all duration-300"
+              >
+                Open Cart
               </button>
             </div>
 
