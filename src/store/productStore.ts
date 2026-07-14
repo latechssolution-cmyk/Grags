@@ -329,9 +329,11 @@ export function useProducts() {
 
   const getById = useCallback((id: string) => products.find((p) => p.id === id || p.sku === id), [products]);
 
+  // Works with just a color, just a size, or both — a product only needs to vary
+  // by one dimension to get per-variant stock (e.g. sizes with no color options).
   const getVariantStock = useCallback((product: Product, color?: string, size?: string): number => {
-    if (product.variantStock && color && size) {
-      const key = variantStockKey(color, size);
+    if (product.variantStock && (color || size)) {
+      const key = variantStockKey(color ?? "", size ?? "");
       if (key in product.variantStock) return product.variantStock[key];
     }
     return product.stock;

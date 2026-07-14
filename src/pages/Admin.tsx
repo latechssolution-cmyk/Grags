@@ -521,54 +521,75 @@ const ProductForm = ({
       </div>
 
       {/* ── Stock by Size & Color ────────────────────────────── */}
-      {form.sizes.length > 0 && (form.colorVariants ?? []).length > 0 && (
-        <div className="space-y-3 border-t border-border pt-4">
-          <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Stock by Size & Color</p>
-          <p className="text-[10px] text-muted-foreground font-sans">Leave blank to fall back to the overall Stock value above.</p>
-          <div className="overflow-x-auto">
-            <table className="text-xs font-sans border-collapse">
-              <thead>
-                <tr>
-                  <th className="text-left px-3 py-2 border border-border bg-secondary text-muted-foreground font-medium">Color \ Size</th>
-                  {form.sizes.map((s) => (
-                    <th key={s} className="px-3 py-2 border border-border bg-secondary text-muted-foreground font-medium">{s}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(form.colorVariants ?? []).map((v) => (
-                  <tr key={v.name}>
-                    <td className="px-3 py-2 border border-border text-foreground">{v.name}</td>
-                    {form.sizes.map((s) => {
-                      const key = variantStockKey(v.name, s);
-                      return (
-                        <td key={s} className="border border-border p-1">
-                          <input
-                            type="number"
-                            min={0}
-                            value={form.variantStock?.[key] ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value === "" ? undefined : Number(e.target.value);
-                              setForm((f) => {
-                                const next = { ...(f.variantStock ?? {}) };
-                                if (val === undefined) delete next[key];
-                                else next[key] = val;
-                                return { ...f, variantStock: next };
-                              });
-                            }}
-                            placeholder={String(form.stock)}
-                            className="w-16 bg-transparent px-2 py-1 text-center text-xs font-sans focus:outline-none"
-                          />
-                        </td>
-                      );
-                    })}
+      {/* Works with just sizes, just colors, or both — a product only needs to
+          vary along one dimension to get per-variant stock control. */}
+      {(form.sizes.length > 0 || (form.colorVariants ?? []).length > 0) && (() => {
+        const hasSizes = form.sizes.length > 0;
+        const hasColors = (form.colorVariants ?? []).length > 0;
+        const colorRows = hasColors ? form.colorVariants! : [{ name: "", hex: "", image: "" }];
+        const sizeCols = hasSizes ? form.sizes : [""];
+
+        const stockInput = (color: string, size: string) => {
+          const key = variantStockKey(color, size);
+          return (
+            <input
+              type="number"
+              min={0}
+              value={form.variantStock?.[key] ?? ""}
+              onChange={(e) => {
+                const val = e.target.value === "" ? undefined : Number(e.target.value);
+                setForm((f) => {
+                  const next = { ...(f.variantStock ?? {}) };
+                  if (val === undefined) delete next[key];
+                  else next[key] = val;
+                  return { ...f, variantStock: next };
+                });
+              }}
+              placeholder={String(form.stock)}
+              className="w-16 bg-transparent px-2 py-1 text-center text-xs font-sans focus:outline-none"
+            />
+          );
+        };
+
+        return (
+          <div className="space-y-3 border-t border-border pt-4">
+            <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">
+              Stock by {hasSizes && hasColors ? "Size & Color" : hasSizes ? "Size" : "Color"}
+            </p>
+            <p className="text-[10px] text-muted-foreground font-sans">Leave blank to fall back to the overall Stock value above.</p>
+            <div className="overflow-x-auto">
+              <table className="text-xs font-sans border-collapse">
+                <thead>
+                  <tr>
+                    {hasColors && (
+                      <th className="text-left px-3 py-2 border border-border bg-secondary text-muted-foreground font-medium">
+                        {hasSizes ? "Color \\ Size" : "Color"}
+                      </th>
+                    )}
+                    {sizeCols.map((s, i) => (
+                      <th key={s || i} className="px-3 py-2 border border-border bg-secondary text-muted-foreground font-medium">
+                        {hasSizes ? s : "Stock"}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {colorRows.map((v) => (
+                    <tr key={v.name || "default"}>
+                      {hasColors && <td className="px-3 py-2 border border-border text-foreground">{v.name}</td>}
+                      {sizeCols.map((s) => (
+                        <td key={s} className="border border-border p-1">
+                          {stockInput(v.name, s)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Size Chart (per product) ────────────────────────── */}
       <div className="space-y-3 border-t border-border pt-4">
@@ -805,7 +826,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 
 // ─── Admin Panel (authenticated view) ────────────────────
 const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
-  const { products, addProduct, updateProduct, deleteProduct, restoreStock } = useProducts();
+  const { products, addProduct, updateProduct, deleteProduct, decrementStock, restoreStock, getVariantStock } = useProducts();
   const { hero, updateHero, defaultImage } = useHero();
   const { fabric, updateFabric, defaultImage: fabricDefaultImage } = useFabric();
   const { orders, updateStatus, updateOrder, deleteOrder } = useOrders();
@@ -885,11 +906,46 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   };
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus, order: any) => {
+    // Stock is only committed once an admin confirms the order — not at
+    // placement — so Pending/COD orders that never get confirmed don't tie up
+    // inventory. The stockDecremented flag lets status move back and forth
+    // (Confirmed -> Shipped -> Confirmed, or a mistaken Cancel) without
+    // double-decrementing or double-restoring.
+    const orderItems = order.products.map((p: any) => ({ id: p.id, size: p.size, color: p.color, quantity: p.quantity }));
+    // Covers admins jumping straight to Shipped/Delivered without an
+    // explicit Confirmed step too — stock still only commits once.
+    const isFulfilling = newStatus === "Confirmed" || newStatus === "Shipped" || newStatus === "Delivered";
+
+    if (isFulfilling && !order.stockDecremented) {
+      // Two customers can order the last unit before either order is confirmed —
+      // catch that here instead of silently overselling (stock floors at 0, never negative).
+      const shortages = orderItems
+        .map((item: any) => {
+          const product = products.find((p) => p.id === item.id);
+          if (!product) return null;
+          const available = getVariantStock(product, item.color, item.size);
+          if (available >= item.quantity) return null;
+          const variant = item.color ? `${item.color}, ${item.size}` : item.size;
+          return `${product.name} (${variant}) — only ${available} left, this order needs ${item.quantity}`;
+        })
+        .filter(Boolean);
+
+      if (shortages.length > 0) {
+        const proceed = confirm(
+          `Not enough stock to confirm this order:\n\n${shortages.join("\n")}\n\nConfirming anyway will cap stock at 0 for these items, not oversell. Continue?`
+        );
+        if (!proceed) return;
+      }
+    }
+
     updateStatus(orderId, newStatus);
 
-    // Cancelling releases the stock reserved when the order was placed.
-    if (order.status !== "Cancelled" && newStatus === "Cancelled") {
-      restoreStock(order.products.map((p: any) => ({ id: p.id, size: p.size, color: p.color, quantity: p.quantity })));
+    if (isFulfilling && !order.stockDecremented) {
+      decrementStock(orderItems);
+      updateOrder(orderId, { stockDecremented: true });
+    } else if (newStatus === "Cancelled" && order.stockDecremented) {
+      restoreStock(orderItems);
+      updateOrder(orderId, { stockDecremented: false });
     }
 
     showToast("⏳ Sending email...");

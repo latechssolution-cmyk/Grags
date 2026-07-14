@@ -38,6 +38,10 @@ export interface Order {
   status: OrderStatus;
   receiptImage?: string;
   paid?: boolean;
+  // Tracks whether stock has been decremented for this order, so status can move
+  // back and forth (e.g. Confirmed -> Shipped -> Confirmed, or a mistaken Cancel)
+  // without double-decrementing or double-restoring inventory.
+  stockDecremented?: boolean;
 }
 
 const STORAGE_KEY = "graggs_orders";

@@ -5,7 +5,6 @@ import { ChevronLeft, ShoppingBag, Tag, CheckCircle, Upload } from "lucide-react
 import { useCart } from "@/store/cartStore";
 import { useOrders } from "@/store/orderStore";
 import { useSettings } from "@/store/settingsStore";
-import { useProducts } from "@/store/productStore";
 
 type PaymentMethod = "COD" | "Bank Transfer";
 type ShippingMethod = "Standard" | "Express";
@@ -60,7 +59,6 @@ function Field({
 export default function CheckoutPage() {
   const { items, subtotal, clear } = useCart();
   const { addOrder } = useOrders();
-  const { decrementStock } = useProducts();
   const { settings, applyCoupon } = useSettings();
 
   const [form, setForm] = useState<FormData>({
@@ -152,8 +150,10 @@ export default function CheckoutPage() {
       ...(isBankTransfer && receiptImage ? { receiptImage } : {}),
     };
 
+    // Stock is only decremented once an admin confirms the order (see Admin.tsx
+    // handleStatusChange) — not at placement, so Pending/COD orders that never
+    // get confirmed don't tie up inventory.
     addOrder(order);
-    decrementStock(items.map((i) => ({ id: i.productId, size: i.size, color: i.color, quantity: i.quantity })));
 
     if (typeof window !== "undefined" && (window as any).gtag) {
       (window as any).gtag("event", "purchase", {

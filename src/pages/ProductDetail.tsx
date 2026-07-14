@@ -574,19 +574,27 @@ const ProductDetail = () => {
                   </span>
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                  {product.colorVariants.map((v, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedVariant(i)}
-                      title={v.name}
-                      className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
-                        selectedVariant === i
-                          ? "border-foreground scale-110 shadow-md"
-                          : "border-transparent hover:border-muted-foreground"
-                      }`}
-                      style={{ backgroundColor: v.hex }}
-                    />
-                  ))}
+                  {product.colorVariants.map((v, i) => {
+                    // Once a size is picked, only colors that actually have stock
+                    // in that size stay clickable — mirrors the size filtering below.
+                    const colorOutOfStock = selectedSize ? getVariantStock(product, v.name, selectedSize) <= 0 : false;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => !colorOutOfStock && setSelectedVariant(i)}
+                        disabled={colorOutOfStock}
+                        title={colorOutOfStock ? `${v.name} — out of stock in size ${selectedSize}` : v.name}
+                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                          colorOutOfStock
+                            ? "opacity-30 cursor-not-allowed"
+                            : selectedVariant === i
+                            ? "border-foreground scale-110 shadow-md"
+                            : "border-transparent hover:border-muted-foreground"
+                        }`}
+                        style={{ backgroundColor: v.hex }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
