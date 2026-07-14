@@ -861,6 +861,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   const [instagramUrl, setInstagramUrl] = useState(settings.instagramUrl ?? "");
   const [facebookUrl, setFacebookUrl] = useState(settings.facebookUrl ?? "");
   const [bankAccountDetails, setBankAccountDetails] = useState(settings.bankAccountDetails ?? "");
+  const [announcementText, setAnnouncementText] = useState(settings.announcementText ?? "");
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   // Re-sync settings form state when MongoDB data arrives asynchronously
@@ -874,6 +875,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
     setInstagramUrl(settings.instagramUrl ?? "");
     setFacebookUrl(settings.facebookUrl ?? "");
     setBankAccountDetails(settings.bankAccountDetails ?? "");
+    setAnnouncementText(settings.announcementText ?? "");
   }, [settings]);
 
   const showToast = (msg: string, ok = true) => {
@@ -1814,6 +1816,11 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
             <div className="space-y-4 border border-border p-5">
               <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Header / Footer Links</p>
               <div>
+                <label className={labelCls}>Header Announcement Line</label>
+                <p className="text-xs text-muted-foreground font-sans mb-2">Optional promo line shown under the header's Track Order / WhatsApp / Store Location row (e.g. a free shipping or delivery note). Leave blank to hide.</p>
+                <input value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} className={inputCls} placeholder="e.g. Free delivery on Bank Transfer orders — Cash on Delivery free above PKR 2,999" />
+              </div>
+              <div>
                 <label className={labelCls}>Track Order URL</label>
                 <p className="text-xs text-muted-foreground font-sans mb-2">Used by "Track Order" in the announcement bar, footer, and mobile menu</p>
                 <input value={trackOrderUrl} onChange={(e) => setTrackOrderUrl(e.target.value)} className={inputCls} placeholder="https://www.tcs.com.pk/tracking" />
@@ -1848,7 +1855,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
             </div>
 
             <button
-              onClick={() => updateSettings({ whatsappNumber: whatsappNum, contactEmail, senderEmail, storeLocation, googleMapsUrl, trackOrderUrl, instagramUrl, facebookUrl, bankAccountDetails })}
+              onClick={() => updateSettings({ whatsappNumber: whatsappNum, contactEmail, senderEmail, storeLocation, googleMapsUrl, trackOrderUrl, instagramUrl, facebookUrl, bankAccountDetails, announcementText })}
               className="flex items-center gap-2 px-6 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity"
             >
               <Save className="w-3 h-3" /> Save Settings

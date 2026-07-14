@@ -9,7 +9,10 @@ import { useSettings } from "@/store/settingsStore";
 type PaymentMethod = "COD" | "Bank Transfer";
 type ShippingMethod = "Standard" | "Express";
 
-const BANK_TRANSFER_DISCOUNT = 200;
+// COD ships free above this subtotal; at/below it, a flat delivery charge applies.
+// Bank Transfer always ships free (Standard), regardless of order value.
+const COD_FREE_SHIPPING_THRESHOLD = 2999;
+const COD_SHIPPING_FEE = 200;
 const EXPRESS_SHIPPING_COST = 250;
 
 interface FormData {
@@ -102,9 +105,15 @@ export default function CheckoutPage() {
   }, []);
 
   const isBankTransfer = form.paymentMethod === "Bank Transfer";
-  const shippingCost = form.shippingMethod === "Express" ? EXPRESS_SHIPPING_COST : 0;
-  const bankTransferDiscount = isBankTransfer ? BANK_TRANSFER_DISCOUNT : 0;
-  const discount = (couponResult?.valid ? couponResult.discount : 0) + bankTransferDiscount;
+  const shippingCost =
+    form.shippingMethod === "Express"
+      ? EXPRESS_SHIPPING_COST
+      : isBankTransfer
+      ? 0
+      : subtotal > COD_FREE_SHIPPING_THRESHOLD
+      ? 0
+      : COD_SHIPPING_FEE;
+  const discount = couponResult?.valid ? couponResult.discount : 0;
   const total = Math.max(0, subtotal + shippingCost - discount);
   const receiptRequired = isBankTransfer && !receiptImage;
 
@@ -271,7 +280,14 @@ export default function CheckoutPage() {
                 <div className="grid sm:grid-cols-2 gap-3">
                   {(["Standard", "Express"] as ShippingMethod[]).map((m) => {
                     const disabled = m === "Express" && !isBankTransfer;
-                    const cost = m === "Express" ? EXPRESS_SHIPPING_COST : 0;
+                    const cost =
+                      m === "Express"
+                        ? EXPRESS_SHIPPING_COST
+                        : isBankTransfer
+                        ? 0
+                        : subtotal > COD_FREE_SHIPPING_THRESHOLD
+                        ? 0
+                        : COD_SHIPPING_FEE;
                     return (
                       <label
                         key={m}
@@ -323,13 +339,17 @@ export default function CheckoutPage() {
                       <span className="text-sm">{m}</span>
                       {m === "Bank Transfer" && (
                         <span className="ml-auto text-[10px] tracking-wide uppercase text-green-600 border border-green-600/30 px-1.5 py-0.5">
-                          Save PKR {BANK_TRANSFER_DISCOUNT}
+                          Free Delivery
                         </span>
                       )}
                       <input type="radio" className="sr-only" checked={form.paymentMethod === m} onChange={() => setPaymentMethod(m)} />
                     </label>
                   ))}
                 </div>
+
+                <p className="text-xs text-foreground/40">
+                  Cash on Delivery orders above PKR {COD_FREE_SHIPPING_THRESHOLD.toLocaleString()} ship free — a PKR {COD_SHIPPING_FEE} delivery charge applies at or below that amount. Bank Transfer always ships free.
+                </p>
 
                 {/* Bank Transfer details + receipt upload */}
                 {isBankTransfer && (
@@ -440,12 +460,6 @@ export default function CheckoutPage() {
                     <span className="text-foreground/50">Shipping</span>
                     <span>{shippingCost > 0 ? `PKR ${shippingCost.toLocaleString()}` : "Free"}</span>
                   </div>
-                  {bankTransferDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>Bank Transfer Discount</span>
-                      <span>-PKR {bankTransferDiscount.toLocaleString()}</span>
-                    </div>
-                  )}
                   {couponResult?.valid && couponResult.discount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Coupon Discount</span>

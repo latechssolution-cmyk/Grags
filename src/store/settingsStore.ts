@@ -34,6 +34,7 @@ export interface SiteSettings {
   instagramUrl?: string;
   facebookUrl?: string;
   bankAccountDetails?: string;
+  announcementText?: string;
   couponCodes: CouponCode[];
   collections: Collection[];
 }
@@ -48,6 +49,7 @@ const defaultSettings: SiteSettings = {
   instagramUrl: "",
   facebookUrl: "",
   bankAccountDetails: "",
+  announcementText: "",
   couponCodes: [
     { id: "1", code: "GRAGS10", discount: 10, type: "percentage", active: true },
     { id: "2", code: "WELCOME500", discount: 500, type: "fixed", active: true },

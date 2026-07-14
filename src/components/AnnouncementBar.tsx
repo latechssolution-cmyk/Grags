@@ -69,6 +69,13 @@ const AnnouncementBar = () => {
           </button> */}
 
         </div>
+
+        {/* Promo line — admin-editable, hidden when empty */}
+        {settings.announcementText && (
+          <div className="max-w-7xl mx-auto text-center pb-2 px-4 text-[10px] md:text-[11px] uppercase tracking-ultra-wide font-sans opacity-90">
+            {settings.announcementText}
+          </div>
+        )}
       </div>
 
       {/* Popup */}
