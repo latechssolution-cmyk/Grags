@@ -19,7 +19,7 @@ const AnnouncementBar = () => {
             href={settings.trackOrderUrl || "https://www.tcs.com.pk/tracking"}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition"
+            className="flex items-center gap-1.5 uppercase opacity-80 hover:opacity-100 transition"
           >
             <Package className="w-3.5 h-3.5" />
             Track Order
@@ -30,7 +30,12 @@ const AnnouncementBar = () => {
             href={`https://wa.me/${settings.whatsappNumber}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition"
+            onClick={() => {
+              if (typeof window !== "undefined" && (window as any).fbq) {
+                (window as any).fbq("track", "Contact");
+              }
+            }}
+            className="flex items-center gap-1.5 uppercase opacity-80 hover:opacity-100 transition"
           >
             <MessageCircle className="w-3.5 h-3.5" />
             WhatsApp
@@ -38,13 +43,14 @@ const AnnouncementBar = () => {
 
           {/* Store Location */}
           <button
+            type="button"
             onClick={() => {
               setPopup("location");
               if (typeof window !== "undefined" && (window as any).fbq) {
                 (window as any).fbq("track", "FindLocation");
               }
             }}
-            className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition"
+            className="flex items-center gap-1.5 uppercase opacity-80 hover:opacity-100 transition"
           >
             <MapPin className="w-3.5 h-3.5" />
             Store Location

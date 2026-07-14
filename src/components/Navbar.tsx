@@ -9,7 +9,18 @@ import AuthModal from "./AuthModal";
 import ThemeToggle from "./ThemeToggle";
 import logo from "@/assets/logo.png";
 
-const navLinks = [
+// Static dropdown groups — items that don't map to an admin Collection.
+// "Shop By" filters products by the Gender field every product already has
+// in the admin panel, so it stays consistent automatically: no separate
+// section management needed, just set a product's Gender when adding it.
+const navLinks: { label: string; href: string | null; modal?: string | null; dropdown?: { label: string; href: string }[] }[] = [
+  {
+    label: "Shop By", href: null, dropdown: [
+      { label: "Men", href: "/men" },
+      { label: "Women", href: "/women" },
+      { label: "Kids", href: "/kids" },
+    ],
+  },
   { label: "New In", href: "/new-in" },
   { label: "Summer", href: "/summer" },
   { label: "Winter", href: "/winter" },
@@ -17,6 +28,7 @@ const navLinks = [
   { label: "Bottoms", href: "/bottoms" },
   { label: "Essentials", href: "/essentials" },
   { label: "Heritage", href: "/heritage" },
+  { label: "Sale", href: "/sale" },
   { label: "Journals", href: "/journal", modal: null },
   { label: "About Us", href: null, modal: "about" },
 ];
@@ -163,6 +175,11 @@ const AboutModal = ({ onClose }) => {
 
                 <a
                   href={`https://wa.me/${settings.whatsappNumber?.replace(/\D/g, "")}`}
+                  onClick={() => {
+                    if (typeof window !== "undefined" && (window as any).fbq) {
+                      (window as any).fbq("track", "Contact");
+                    }
+                  }}
                   className="flex items-center gap-3 text-sm font-sans text-foreground/70 hover:text-foreground transition-colors group"
                 >
                   <Phone className="w-3.5 h-3.5 text-foreground/40 group-hover:text-foreground transition-colors" />
@@ -347,7 +364,7 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
           <Link to="/">
             <img
               src={logo}
-              alt="GRAGS"
+              alt="Grags"
               className="h-5 md:h-6 w-auto object-contain invert dark:invert-0"
             />
           </Link>
@@ -368,6 +385,30 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
                       >
                         {link.label}
                       </button>
+                    );
+                  }
+
+                  if (link.dropdown) {
+                    return (
+                      <div key={link.label} className="group relative py-2 -my-2">
+                        <span className="text-xs tracking-ultra-wide uppercase font-sans text-foreground/80 cursor-default flex items-center gap-1">
+                          {link.label}
+                          <ChevronDown className="w-3 h-3" />
+                        </span>
+                        <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
+                          <div className="bg-background border border-border shadow-lg min-w-[140px] py-2">
+                            {link.dropdown.map((item) => (
+                              <Link
+                                key={item.href}
+                                to={item.href}
+                                className="block px-4 py-2 text-xs font-sans text-foreground/70 hover:text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
+                              >
+                                {item.label}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     );
                   }
 
@@ -503,6 +544,40 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
                     );
                   }
 
+                  if (link.dropdown) {
+                    const isOpen = openMobileDropdown === link.label;
+                    return (
+                      <motion.div
+                        key={link.label}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.08 + 0.2 }}
+                      >
+                        <button
+                          onClick={() => setOpenMobileDropdown(isOpen ? null : link.label)}
+                          className="flex items-center gap-2 text-lg font-serif tracking-wide text-foreground"
+                        >
+                          {link.label}
+                          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                        </button>
+                        {isOpen && (
+                          <div className="mt-3 ml-3 flex flex-col gap-3 border-l border-border pl-4">
+                            {link.dropdown.map((item) => (
+                              <Link
+                                key={item.href}
+                                to={item.href}
+                                onClick={() => setMenuOpen(false)}
+                                className="text-sm font-sans text-foreground/70"
+                              >
+                                {item.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  }
+
                   const collection = findCollectionForLink(link, settings.collections ?? []);
                   const sections = collection?.sections ?? [];
                   const isOpen = openMobileDropdown === link.label;
@@ -577,7 +652,12 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
                       href={`https://wa.me/${settings.whatsappNumber}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={() => setMenuOpen(false)}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (typeof window !== "undefined" && (window as any).fbq) {
+                          (window as any).fbq("track", "Contact");
+                        }
+                      }}
                       className="flex items-center gap-2 text-sm font-sans text-foreground/80 hover:text-foreground transition-colors"
                     >
                       <MessageCircle className="w-4 h-4" />

@@ -19,6 +19,10 @@ import JournalPage from "./pages/JournalPage";
 import JournalArticlePage from "./pages/JournalArticlePage";
 import Summer from "./pages/Summer";
 import Winter from "./pages/Winter";
+import Sale from "./pages/Sale";
+import Men from "./pages/Men";
+import Women from "./pages/Women";
+import Kids from "./pages/Kids";
 import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
@@ -39,6 +43,10 @@ const App = () => (
           <Route path="/bottoms" element={<Bottoms />} />
           <Route path="/essentials" element={<Essentials />} />
           <Route path="/heritage" element={<Heritage />} />
+          <Route path="/sale" element={<Sale />} />
+          <Route path="/men" element={<Men />} />
+          <Route path="/women" element={<Women />} />
+          <Route path="/kids" element={<Kids />} />
           <Route path="/collections/:slug" element={<CollectionPage />} />
           <Route path="/product/:code" element={<ProductDetail />} />
           <Route path="/checkout" element={<CheckoutPage />} />

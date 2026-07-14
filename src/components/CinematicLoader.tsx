@@ -28,7 +28,7 @@ const CinematicLoader = ({ onComplete }: { onComplete: () => void }) => {
         {/* LOGO IMAGE */}
         <motion.img
           src={logo}
-          alt="GRAGS"
+          alt="Grags"
           className="w-48 md:w-72 object-contain invert dark:invert-0"
           initial={{ opacity: 0, y: 60, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -39,7 +39,7 @@ const CinematicLoader = ({ onComplete }: { onComplete: () => void }) => {
         />
 
         <motion.p
-          className="mt-6 text-xs md:text-sm uppercase tracking-[0.6em] text-foreground/50"
+          className="mt-6 text-xs md:text-sm uppercase tracking-[0.4em] md:tracking-[0.6em] text-foreground/50 text-center px-6 max-w-xs"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.8 }}

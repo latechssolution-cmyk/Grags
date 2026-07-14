@@ -11,7 +11,7 @@ import { useJournal, JournalArticle, resolveImageUrl } from "@/store/journalStor
 import OrderDetailsModal from "@/components/OrderDetailsModal";
 import { Order } from "@/store/orderStore";
 
-const ALL_TAGS = ["NEW IN", "SUMMER", "WINTER", "TOPS", "BOTTOMS", "ESSENTIALS", "HERITAGE"];
+const ALL_TAGS = ["NEW IN", "SUMMER", "WINTER", "TOPS", "BOTTOMS", "ESSENTIALS", "HERITAGE", "SALE"];
 const PREDEFINED_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const ORDER_STATUSES: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"];
 
@@ -732,7 +732,7 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
         className="w-full max-w-sm"
       >
         <div className="text-center mb-10">
-          <img src={logo} alt="GRAGS" className="h-6 w-auto mx-auto mb-8 opacity-90" />
+          <img src={logo} alt="Grags" className="h-6 w-auto mx-auto mb-8 opacity-90 invert dark:invert-0" />
           <div className="flex items-center justify-center gap-2 mb-2">
             <Lock className="w-3.5 h-3.5 text-muted-foreground" />
             <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans">Admin Access</p>

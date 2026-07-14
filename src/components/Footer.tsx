@@ -10,6 +10,7 @@ const shopLinks = [
   { label: "Bottoms", href: "/bottoms" },
   { label: "Essentials", href: "/essentials" },
   { label: "Heritage", href: "/heritage" },
+  { label: "Sale", href: "/sale" },
 ];
 
 const legalLinks = [
@@ -141,6 +142,11 @@ const Footer = () => {
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        if (link.label === "WhatsApp" && typeof window !== "undefined" && (window as any).fbq) {
+                          (window as any).fbq("track", "Contact");
+                        }
+                      }}
                       className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors duration-300"
                     >
                       {link.label}
@@ -210,6 +216,11 @@ const Footer = () => {
               href={`https://wa.me/${settings.whatsappNumber}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                if (typeof window !== "undefined" && (window as any).fbq) {
+                  (window as any).fbq("track", "Contact");
+                }
+              }}
               aria-label="WhatsApp"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >

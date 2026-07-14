@@ -10,6 +10,11 @@ const WhatsAppButton = () => {
       href={`https://wa.me/${settings.whatsappNumber}`}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => {
+        if (typeof window !== "undefined" && (window as any).fbq) {
+          (window as any).fbq("track", "Contact");
+        }
+      }}
       className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-accent flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-300"
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
