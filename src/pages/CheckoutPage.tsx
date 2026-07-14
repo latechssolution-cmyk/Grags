@@ -42,7 +42,10 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-xs text-foreground/50 tracking-widest uppercase">{label}</label>
+      <label className="text-xs text-foreground/50 tracking-widest uppercase">
+        {label}
+        {required && <span className="text-destructive"> *</span>}
+      </label>
       <input
         type={type}
         value={value}
@@ -243,7 +246,10 @@ export default function CheckoutPage() {
           Continue Shopping
         </Link>
 
-        <h1 className="text-2xl font-light tracking-widest uppercase mb-10">Checkout</h1>
+        <h1 className="text-2xl font-light tracking-widest uppercase mb-2">Checkout</h1>
+        <p className="text-xs text-foreground/40 mb-8">
+          <span className="text-destructive">*</span> Required fields
+        </p>
 
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-[1fr_380px] gap-12">
@@ -270,7 +276,7 @@ export default function CheckoutPage() {
                   <Field label="House / Apt" value={form.house} onChange={set("house")} />
                   <Field label="Street" value={form.street} onChange={set("street")} />
                   <Field label="City" value={form.city} onChange={set("city")} />
-                  <Field label="Postal Code" value={form.postalCode} onChange={set("postalCode")} />
+                  <Field label="Postal Code" value={form.postalCode} onChange={set("postalCode")} required={false} />
                   <Field label="Country" value={form.country} onChange={set("country")} />
                 </div>
               </section>
@@ -364,7 +370,9 @@ export default function CheckoutPage() {
                       </div>
                     )}
                     <div>
-                      <p className="text-xs text-foreground/50 tracking-widest uppercase mb-1.5">Payment Receipt *</p>
+                      <p className="text-xs text-foreground/50 tracking-widest uppercase mb-1.5">
+                        Payment Receipt<span className="text-destructive"> *</span>
+                      </p>
                       <p className="text-xs text-foreground/40 mb-2">Attach a screenshot of your transfer — required before you can place the order.</p>
                       <label className="flex items-center gap-2 border border-foreground/20 px-4 py-3 cursor-pointer hover:border-foreground/40 transition-colors w-fit">
                         <Upload size={14} />
@@ -398,7 +406,7 @@ export default function CheckoutPage() {
                     <Field label="Billing House / Apt" value={form.billingHouse} onChange={set("billingHouse")} />
                     <Field label="Billing Street" value={form.billingStreet} onChange={set("billingStreet")} />
                     <Field label="Billing City" value={form.billingCity} onChange={set("billingCity")} />
-                    <Field label="Billing Postal Code" value={form.billingPostalCode} onChange={set("billingPostalCode")} />
+                    <Field label="Billing Postal Code" value={form.billingPostalCode} onChange={set("billingPostalCode")} required={false} />
                     <Field label="Billing Country" value={form.billingCountry} onChange={set("billingCountry")} />
                   </div>
                 )}

@@ -1,6 +1,7 @@
 import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/store/cartStore";
+import { useProducts } from "@/store/productStore";
 import { Link } from "react-router-dom";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 
 export default function CartDrawer({ open, onClose }: Props) {
   const { items, count, subtotal, updateQty, removeItem } = useCart();
+  const { getById, getVariantStock } = useProducts();
 
   return (
     <AnimatePresence>
@@ -50,48 +52,57 @@ export default function CartDrawer({ open, onClose }: Props) {
                   <p className="text-sm tracking-widest uppercase">Your cart is empty</p>
                 </div>
               ) : (
-                items.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="flex gap-4"
-                  >
-                    {item.image && (
-                      <img src={item.image} alt={item.name} className="w-20 h-24 object-cover rounded" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-snug truncate">{item.name}</p>
-                      <p className="text-xs text-foreground/50 mt-0.5">
-                        {item.color && `${item.color} · `}Size {item.size}
-                      </p>
-                      <p className="text-sm mt-1">{item.price}</p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <button
-                          onClick={() => updateQty(item.id, item.quantity - 1)}
-                          className="w-6 h-6 rounded border border-foreground/20 flex items-center justify-center hover:border-foreground/60 transition-colors"
-                        >
-                          <Minus size={10} />
-                        </button>
-                        <span className="text-sm w-4 text-center">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQty(item.id, item.quantity + 1)}
-                          className="w-6 h-6 rounded border border-foreground/20 flex items-center justify-center hover:border-foreground/60 transition-colors"
-                        >
-                          <Plus size={10} />
-                        </button>
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="ml-auto text-foreground/30 hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                items.map((item) => {
+                  const product = getById(item.productId);
+                  const maxStock = product ? getVariantStock(product, item.color, item.size) : Infinity;
+                  const atMax = item.quantity >= maxStock;
+                  return (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex gap-4"
+                    >
+                      {item.image && (
+                        <img src={item.image} alt={item.name} className="w-20 h-24 object-cover rounded" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-snug truncate">{item.name}</p>
+                        <p className="text-xs text-foreground/50 mt-0.5">
+                          {item.color && `${item.color} · `}Size {item.size}
+                        </p>
+                        <p className="text-sm mt-1">{item.price}</p>
+                        <div className="flex items-center gap-3 mt-2">
+                          <button
+                            onClick={() => updateQty(item.id, item.quantity - 1)}
+                            className="w-6 h-6 rounded border border-foreground/20 flex items-center justify-center hover:border-foreground/60 transition-colors"
+                          >
+                            <Minus size={10} />
+                          </button>
+                          <span className="text-sm w-4 text-center">{item.quantity}</span>
+                          <button
+                            onClick={() => !atMax && updateQty(item.id, item.quantity + 1)}
+                            disabled={atMax}
+                            className="w-6 h-6 rounded border border-foreground/20 flex items-center justify-center hover:border-foreground/60 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-foreground/20"
+                          >
+                            <Plus size={10} />
+                          </button>
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="ml-auto text-foreground/30 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        {atMax && (
+                          <p className="text-[10px] text-foreground/40 mt-1">Max available stock reached</p>
+                        )}
                       </div>
-                    </div>
-                  </motion.div>
-                ))
+                    </motion.div>
+                  );
+                })
               )}
             </div>
 

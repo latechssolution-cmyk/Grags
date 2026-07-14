@@ -349,8 +349,8 @@ const ProductDetail = () => {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [cartAdded, setCartAdded] = useState(false);
-  const [sizeError, setSizeError] = useState(false);
-  const { addItem, openDrawer } = useCart();
+  const [sizeError, setSizeError] = useState("");
+  const { items: cartItems, addItem, openDrawer } = useCart();
 
   // Review form state
   const [reviewName, setReviewName] = useState("");
@@ -361,14 +361,23 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     if (product.sizes.length > 0 && !selectedSize) {
-      setSizeError(true);
-      setTimeout(() => setSizeError(false), 2000);
+      setSizeError("Please select a size before adding to cart.");
+      setTimeout(() => setSizeError(""), 2500);
       return;
     }
     const colorName = product.colorVariants?.[selectedVariant]?.name ?? "";
-    if (getVariantStock(product, colorName, selectedSize) <= 0) {
-      setSizeError(true);
-      setTimeout(() => setSizeError(false), 2000);
+    const availableStock = getVariantStock(product, colorName, selectedSize);
+    const alreadyInCart = cartItems
+      .filter((i) => i.productId === product.id && i.size === (selectedSize || "One Size") && i.color === colorName)
+      .reduce((sum, i) => sum + i.quantity, 0);
+    if (availableStock <= 0) {
+      setSizeError("This size/color is out of stock.");
+      setTimeout(() => setSizeError(""), 2500);
+      return;
+    }
+    if (alreadyInCart + 1 > availableStock) {
+      setSizeError(`Only ${availableStock} left in stock — you already have the max in your cart.`);
+      setTimeout(() => setSizeError(""), 2500);
       return;
     }
     addItem({
@@ -623,7 +632,7 @@ const ProductDetail = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="text-[10px] font-sans text-destructive tracking-wide"
               >
-                Please select a size before adding to cart.
+                {sizeError}
               </motion.p>
             )}
 

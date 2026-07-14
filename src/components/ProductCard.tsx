@@ -3,7 +3,7 @@ import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Check, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { Product, getProductUrl } from "@/store/productStore";
+import { Product, getProductUrl, useProducts } from "@/store/productStore";
 import { useCart } from "@/store/cartStore";
 
 export interface ProductCardProps {
@@ -16,7 +16,8 @@ export const ProductCard = ({ product, index }: ProductCardProps) => {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [added, setAdded] = useState(false);
-  const { addItem } = useCart();
+  const { items: cartItems, addItem } = useCart();
+  const { getVariantStock } = useProducts();
 
   const hasVariants = product.colorVariants && product.colorVariants.length > 0;
   const displayImage = hasVariants
@@ -25,12 +26,21 @@ export const ProductCard = ({ product, index }: ProductCardProps) => {
 
   const handleQuickAdd = () => {
     const colorName = product.colorVariants?.[selectedVariant]?.name ?? "";
+    const size = product.sizes[0] || "One Size";
+    const availableStock = getVariantStock(product, colorName, size);
+    const alreadyInCart = cartItems
+      .filter((i) => i.productId === product.id && i.size === size && i.color === colorName)
+      .reduce((sum, i) => sum + i.quantity, 0);
+    if (availableStock <= 0 || alreadyInCart + 1 > availableStock) {
+      toast.error("This item is out of stock.");
+      return;
+    }
     addItem({
       productId: product.id,
       name: product.name,
       price: product.price,
       image: displayImage,
-      size: product.sizes[0] || "One Size",
+      size,
       color: colorName,
       quantity: 1,
     });
