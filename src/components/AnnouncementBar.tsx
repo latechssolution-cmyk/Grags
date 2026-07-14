@@ -102,9 +102,28 @@ const AnnouncementBar = () => {
             {popup === "location" && (
               <>
                 <h3 className="text-sm font-semibold mb-3 tracking-wide">
-                  Our Store
+                  Our Stores
                 </h3>
-                {settings.storeLocation ? (
+                {(settings.storeLocations ?? []).length > 0 ? (
+                  <div className="space-y-4">
+                    {(settings.storeLocations ?? []).map((loc) => (
+                      <div key={loc.id}>
+                        <p className="text-sm font-semibold text-foreground/90 mb-1">{loc.name}</p>
+                        <p className="text-sm text-foreground/80 leading-relaxed mb-2">{loc.address}</p>
+                        {loc.googleMapsUrl && (
+                          <a
+                            href={loc.googleMapsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block text-xs tracking-ultra-wide uppercase font-sans border border-foreground/30 px-4 py-2 hover:bg-foreground hover:text-background transition-colors"
+                          >
+                            Open in Maps ↗
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : settings.storeLocation ? (
                   <>
                     <p className="text-sm text-foreground/80 leading-relaxed mb-3">
                       {settings.storeLocation}

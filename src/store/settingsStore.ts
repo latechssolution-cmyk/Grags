@@ -24,12 +24,22 @@ export interface Collection {
   sections?: Section[]; // sub-groupings within this collection
 }
 
+export interface StoreLocation {
+  id: string;
+  name: string; // e.g. "Lahore Flagship"
+  address: string;
+  googleMapsUrl?: string;
+}
+
 export interface SiteSettings {
   whatsappNumber: string;
   contactEmail?: string;
   senderEmail?: string;
+  /** @deprecated use storeLocations — kept for backward compatibility with older saved data */
   storeLocation?: string;
+  /** @deprecated use storeLocations — kept for backward compatibility with older saved data */
   googleMapsUrl?: string;
+  storeLocations?: StoreLocation[];
   trackOrderUrl?: string;
   instagramUrl?: string;
   facebookUrl?: string;
@@ -41,10 +51,11 @@ export interface SiteSettings {
 
 const defaultSettings: SiteSettings = {
   whatsappNumber: "923049172098",
-  contactEmail: "support@grags.com",
+  contactEmail: "support@grags.shop",
   senderEmail: "",
   storeLocation: "",
   googleMapsUrl: "",
+  storeLocations: [],
   trackOrderUrl: "https://www.tcs.com.pk/tracking",
   instagramUrl: "",
   facebookUrl: "",
@@ -72,6 +83,7 @@ function load(): SiteSettings {
         ...defaultSettings,
         ...parsed,
         collections: parsed.collections ?? defaultSettings.collections,
+        storeLocations: parsed.storeLocations ?? defaultSettings.storeLocations,
       };
     }
   } catch {}
@@ -102,6 +114,7 @@ export function useSettings() {
             ...defaultSettings,
             ...data,
             collections: data.collections ?? defaultSettings.collections,
+            storeLocations: data.storeLocations ?? defaultSettings.storeLocations,
           };
           saveSettings(merged);
           setSettings(merged);
@@ -179,5 +192,27 @@ export function useSettings() {
     saveAndSync(next);
   }, [saveAndSync]);
 
-  return { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, applyCoupon, addCollection, updateCollection, deleteCollection };
+  const addStoreLocation = useCallback((loc: StoreLocation) => {
+    const current = load();
+    const next = { ...current, storeLocations: [...(current.storeLocations ?? []), loc] };
+    saveAndSync(next);
+  }, [saveAndSync]);
+
+  const updateStoreLocation = useCallback((id: string, data: Partial<StoreLocation>) => {
+    const current = load();
+    const next = { ...current, storeLocations: (current.storeLocations ?? []).map(l => l.id === id ? { ...l, ...data } : l) };
+    saveAndSync(next);
+  }, [saveAndSync]);
+
+  const deleteStoreLocation = useCallback((id: string) => {
+    const current = load();
+    const next = { ...current, storeLocations: (current.storeLocations ?? []).filter(l => l.id !== id) };
+    saveAndSync(next);
+  }, [saveAndSync]);
+
+  return {
+    settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, applyCoupon,
+    addCollection, updateCollection, deleteCollection,
+    addStoreLocation, updateStoreLocation, deleteStoreLocation,
+  };
 }

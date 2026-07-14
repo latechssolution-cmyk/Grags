@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, MessageCircle, Package, ChevronRight, Mail, Phone, Send, ShoppingBag, User } from "lucide-react";
+import { Menu, X, MessageCircle, Package, ChevronRight, ChevronDown, Mail, Phone, Send, ShoppingBag, User } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useSettings } from "@/store/settingsStore";
+import { useSettings, Collection } from "@/store/settingsStore";
 import { useCart } from "@/store/cartStore";
 import CartDrawer from "./CartDrawer";
 import AuthModal from "./AuthModal";
@@ -20,6 +20,18 @@ const navLinks = [
   { label: "Journals", href: "/journal", modal: null },
   { label: "About Us", href: null, modal: "about" },
 ];
+
+// Match a static nav link to an admin-managed Collection so its Sections can
+// show as a hover/tap dropdown — no dropdown if no matching collection exists.
+const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+function findCollectionForLink(link: { label: string; href: string | null }, collections: Collection[]): Collection | null {
+  if (!link.href) return null;
+  const hrefKey = normalize(link.href.replace(/^\//, ""));
+  const labelKey = normalize(link.label);
+  return (
+    collections.find((c) => normalize(c.slug) === hrefKey || normalize(c.slug) === labelKey || normalize(c.name) === labelKey) ?? null
+  );
+}
 
 // ─── About Us Modal ───────────────────────────────────────────────────────────
 const AboutModal = ({ onClose }) => {
@@ -186,7 +198,7 @@ const AboutModal = ({ onClose }) => {
                 },
                 {
                   title: "Product Authenticity",
-                  body: "All Grags products are genuine and produced under our direct supervision. We do not authorise third-party resellers. If in doubt, purchase only through grags.com."
+                  body: "All Grags products are genuine and produced under our direct supervision. We do not authorise third-party resellers. If in doubt, purchase only through grags.shop."
                 },
                 {
                   title: "Privacy",
@@ -317,6 +329,7 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
   const { settings } = useSettings();
   const { count, isDrawerOpen, openDrawer, closeDrawer } = useCart();
 
@@ -345,25 +358,60 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
             {/* Desktop Navigation */}
             {!transparent && (
               <div className="hidden lg:flex items-center gap-8 mr-4">
-                {navLinks.map((link) =>
-                  link.modal ? (
-                    <button
-                      key={link.label}
-                      onClick={() => openModal(link.modal)}
-                      className="text-xs tracking-ultra-wide uppercase font-sans text-foreground/80 hover:text-foreground transition-colors duration-300 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-px after:bottom-[-2px] after:left-0 after:bg-foreground after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left"
-                    >
-                      {link.label}
-                    </button>
-                  ) : (
-                    <Link
-                      key={link.label}
-                      to={link.href}
-                      className="text-xs tracking-ultra-wide uppercase font-sans text-foreground/80 hover:text-foreground transition-colors duration-300 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-px after:bottom-[-2px] after:left-0 after:bg-foreground after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left"
-                    >
-                      {link.label}
-                    </Link>
-                  )
-                )}
+                {navLinks.map((link) => {
+                  if (link.modal) {
+                    return (
+                      <button
+                        key={link.label}
+                        onClick={() => openModal(link.modal)}
+                        className="text-xs tracking-ultra-wide uppercase font-sans text-foreground/80 hover:text-foreground transition-colors duration-300 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-px after:bottom-[-2px] after:left-0 after:bg-foreground after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left"
+                      >
+                        {link.label}
+                      </button>
+                    );
+                  }
+
+                  const collection = findCollectionForLink(link, settings.collections ?? []);
+                  const sections = collection?.sections ?? [];
+
+                  if (sections.length === 0) {
+                    return (
+                      <Link
+                        key={link.label}
+                        to={link.href}
+                        className="text-xs tracking-ultra-wide uppercase font-sans text-foreground/80 hover:text-foreground transition-colors duration-300 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-px after:bottom-[-2px] after:left-0 after:bg-foreground after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left"
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  }
+
+                  return (
+                    <div key={link.label} className="group relative py-2 -my-2">
+                      <Link
+                        to={link.href}
+                        className="text-xs tracking-ultra-wide uppercase font-sans text-foreground/80 hover:text-foreground transition-colors duration-300 relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-px after:bottom-[-2px] after:left-0 after:bg-foreground after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left"
+                      >
+                        {link.label}
+                      </Link>
+
+                      {/* Mega-menu dropdown — shows this collection's sections */}
+                      <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
+                        <div className="bg-background border border-border shadow-lg min-w-[180px] py-2">
+                          {sections.map((s) => (
+                            <Link
+                              key={s.id}
+                              to={`/collections/${collection.slug}#${s.slug}`}
+                              className="block px-4 py-2 text-xs font-sans text-foreground/70 hover:text-foreground hover:bg-secondary transition-colors whitespace-nowrap"
+                            >
+                              {s.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -436,38 +484,71 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
               </button>
 
               <div className="flex flex-col gap-6">
-                {navLinks.map((link, i) =>
-                  link.modal ? (
+                {navLinks.map((link, i) => {
+                  if (link.modal) {
+                    return (
+                      <motion.div
+                        key={link.label}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.08 + 0.2 }}
+                      >
+                        <button
+                          onClick={() => openModal(link.modal)}
+                          className="text-lg font-serif tracking-wide text-foreground"
+                        >
+                          {link.label}
+                        </button>
+                      </motion.div>
+                    );
+                  }
+
+                  const collection = findCollectionForLink(link, settings.collections ?? []);
+                  const sections = collection?.sections ?? [];
+                  const isOpen = openMobileDropdown === link.label;
+
+                  return (
                     <motion.div
                       key={link.label}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.08 + 0.2 }}
                     >
-                      <button
-                        onClick={() => openModal(link.modal)}
-                        className="text-lg font-serif tracking-wide text-foreground"
-                      >
-                        {link.label}
-                      </button>
+                      <div className="flex items-center justify-between">
+                        <Link
+                          to={link.href}
+                          onClick={() => setMenuOpen(false)}
+                          className="text-lg font-serif tracking-wide text-foreground"
+                        >
+                          {link.label}
+                        </Link>
+                        {sections.length > 0 && (
+                          <button
+                            onClick={() => setOpenMobileDropdown(isOpen ? null : link.label)}
+                            aria-label={`Toggle ${link.label} sections`}
+                            className="p-1 text-foreground/60"
+                          >
+                            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                          </button>
+                        )}
+                      </div>
+                      {sections.length > 0 && isOpen && (
+                        <div className="mt-3 ml-3 flex flex-col gap-3 border-l border-border pl-4">
+                          {sections.map((s) => (
+                            <Link
+                              key={s.id}
+                              to={`/collections/${collection.slug}#${s.slug}`}
+                              onClick={() => setMenuOpen(false)}
+                              className="text-sm font-sans text-foreground/70"
+                            >
+                              {s.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
-                  ) : (
-                    <motion.div
-                      key={link.label}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.08 + 0.2 }}
-                    >
-                      <Link
-                        to={link.href}
-                        onClick={() => setMenuOpen(false)}
-                        className="text-lg font-serif tracking-wide text-foreground"
-                      >
-                        {link.label}
-                      </Link>
-                    </motion.div>
-                  )
-                )}
+                  );
+                })}
 
                 <div className="border-t border-border pt-6 mt-4 space-y-4">
                   <motion.div
@@ -500,7 +581,7 @@ const Navbar = ({ transparent = false }: { transparent?: boolean }) => {
                       className="flex items-center gap-2 text-sm font-sans text-foreground/80 hover:text-foreground transition-colors"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      WhatsApp Us
+                      WhatsApp
                     </a>
                   </motion.div>
                 </div>

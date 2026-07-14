@@ -7,6 +7,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import { useProducts } from "@/store/productStore";
 import { useSettings } from "@/store/settingsStore";
 import { ProductCard } from "@/components/ProductCard";
+import { useSEO } from "@/hooks/useSEO";
 
 const CollectionPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -14,6 +15,15 @@ const CollectionPage = () => {
   const { getByCollection } = useProducts();
 
   const collection = (settings.collections ?? []).find((c) => c.slug === slug);
+
+  useSEO(
+    collection
+      ? {
+          title: `${collection.title} | Grags`,
+          description: `${collection.subtitle} — shop the ${collection.title} at Grags. Premium tailored menswear crafted in Pakistan.`,
+        }
+      : {}
+  );
 
   if (!collection) {
     return (

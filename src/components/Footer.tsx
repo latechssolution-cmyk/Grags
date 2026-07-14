@@ -52,7 +52,27 @@ const Footer = () => {
                 {settings.contactEmail}
               </a>
             )}
-            {settings.storeLocation && (
+            {(settings.storeLocations ?? []).length > 0 ? (
+              <div className="mt-3 space-y-1.5">
+                {(settings.storeLocations ?? []).map((loc) => (
+                  loc.googleMapsUrl ? (
+                    <a
+                      key={loc.id}
+                      href={loc.googleMapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-xs text-muted-foreground hover:text-foreground transition-colors leading-relaxed"
+                    >
+                      📍 {loc.name} — {loc.address}
+                    </a>
+                  ) : (
+                    <p key={loc.id} className="text-xs text-muted-foreground leading-relaxed">
+                      📍 {loc.name} — {loc.address}
+                    </p>
+                  )
+                ))}
+              </div>
+            ) : settings.storeLocation && (
               settings.googleMapsUrl ? (
                 <a
                   href={settings.googleMapsUrl}

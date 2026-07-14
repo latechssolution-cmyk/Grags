@@ -28,3 +28,6 @@ dist-ssr
 
 # Environments
 .env
+
+# Personal Claude Code settings (permission grants etc.) — not shared
+.claude/settings.local.json

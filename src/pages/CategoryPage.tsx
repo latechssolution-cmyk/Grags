@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { useProducts } from "@/store/productStore";
 import { ProductCard } from "@/components/ProductCard";
+import { useSEO } from "@/hooks/useSEO";
 
 interface CategoryPageProps {
   tag: string;
@@ -15,6 +16,11 @@ interface CategoryPageProps {
 const CategoryPage = ({ tag, title, subtitle }: CategoryPageProps) => {
   const { getByTag } = useProducts();
   const filtered = getByTag(tag);
+
+  useSEO({
+    title: `${title} | Grags`,
+    description: `${subtitle} — shop ${title} at Grags. Premium tailored menswear crafted in Pakistan.`,
+  });
 
   return (
     <div className="min-h-screen bg-background">

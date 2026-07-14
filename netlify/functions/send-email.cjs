@@ -23,7 +23,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { to, subject, html } = JSON.parse(event.body);
+    const { to, subject, html, from } = JSON.parse(event.body);
 
     const res = await fetch(BREVO_API_URL, {
       method: "POST",
@@ -33,7 +33,7 @@ exports.handler = async (event) => {
         "api-key": BREVO_API_KEY,
       },
       body: JSON.stringify({
-        sender: { name: "Grags", email: SENDER_EMAIL },
+        sender: { name: "Grags", email: from || SENDER_EMAIL },
         to: [{ email: to }],
         subject,
         htmlContent: html,

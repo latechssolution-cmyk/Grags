@@ -6,8 +6,8 @@ import logo from "@/assets/logo.png";
 import { useProducts, Product, ColorVariant, generateProductCode, SizeChart, variantStockKey } from "@/store/productStore";
 import { useHero, useFabric } from "@/store/heroStore";
 import { useOrders, OrderStatus } from "@/store/orderStore";
-import { useSettings, CouponCode, Collection, Section } from "@/store/settingsStore";
-import { useJournal, JournalArticle } from "@/store/journalStore";
+import { useSettings, CouponCode, Collection, Section, StoreLocation } from "@/store/settingsStore";
+import { useJournal, JournalArticle, resolveImageUrl } from "@/store/journalStore";
 import OrderDetailsModal from "@/components/OrderDetailsModal";
 import { Order } from "@/store/orderStore";
 
@@ -48,7 +48,7 @@ const StatCard = ({
 );
 
 // ─── Send Status Email via Brevo (netlify/functions/send-email.cjs) ──
-const sendStatusEmail = async (status: OrderStatus, order: any): Promise<boolean> => {
+const sendStatusEmail = async (status: OrderStatus, order: any, fromEmail?: string): Promise<boolean> => {
   const subjects: Record<OrderStatus, string> = {
     Pending:   `Your GRAGS Order #${order.id} is Pending`,
     Confirmed: `Your GRAGS Order #${order.id} Has Been Confirmed ✅`,
@@ -127,7 +127,7 @@ const sendStatusEmail = async (status: OrderStatus, order: any): Promise<boolean
     const res = await fetch("/.netlify/functions/send-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to: order.email, subject: subjects[status], html: message }),
+      body: JSON.stringify({ to: order.email, subject: subjects[status], html: message, from: fromEmail || undefined }),
     });
     return res.ok;
   } catch (err: any) {
@@ -805,11 +805,11 @@ const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
 
 // ─── Admin Panel (authenticated view) ────────────────────
 const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
-  const { products, addProduct, updateProduct, deleteProduct } = useProducts();
+  const { products, addProduct, updateProduct, deleteProduct, restoreStock } = useProducts();
   const { hero, updateHero, defaultImage } = useHero();
   const { fabric, updateFabric, defaultImage: fabricDefaultImage } = useFabric();
   const { orders, updateStatus, updateOrder, deleteOrder } = useOrders();
-  const { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, addCollection, updateCollection, deleteCollection } = useSettings();
+  const { settings, updateSettings, addCoupon, deleteCoupon, toggleCoupon, addCollection, updateCollection, deleteCollection, addStoreLocation, deleteStoreLocation } = useSettings();
   const { articles, addArticle, updateArticle, deleteArticle } = useJournal();
 
   const [tab, setTab] = useState<"dashboard" | "products" | "hero" | "fabric" | "orders" | "coupons" | "collections" | "journals" | "settings">("dashboard");
@@ -852,6 +852,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   const [heroForm, setHeroForm] = useState(hero);
   const [fabricForm, setFabricForm] = useState(fabric);
   const [couponForm, setCouponForm] = useState({ code: "", discount: 0, type: "percentage" as "percentage" | "fixed" });
+  const [locationForm, setLocationForm] = useState({ name: "", address: "", googleMapsUrl: "" });
   const [whatsappNum, setWhatsappNum] = useState(settings.whatsappNumber);
   const [contactEmail, setContactEmail] = useState(settings.contactEmail ?? "");
   const [senderEmail, setSenderEmail] = useState(settings.senderEmail ?? "");
@@ -885,8 +886,14 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus, order: any) => {
     updateStatus(orderId, newStatus);
+
+    // Cancelling releases the stock reserved when the order was placed.
+    if (order.status !== "Cancelled" && newStatus === "Cancelled") {
+      restoreStock(order.products.map((p: any) => ({ id: p.id, size: p.size, color: p.color, quantity: p.quantity })));
+    }
+
     showToast("⏳ Sending email...");
-    const success = await sendStatusEmail(newStatus, order);
+    const success = await sendStatusEmail(newStatus, order, settings.senderEmail);
     showToast(
       success ? `✅ Email sent to ${order.email}` : `❌ Email failed — check console for details`,
       success
@@ -1648,7 +1655,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
                   <div>
                     <label className={labelCls}>Full Article Content</label>
                     <p className="text-[10px] text-muted-foreground font-sans mb-1.5">
-                      Supports basic formatting: use **bold text** and separate sections with a blank line. Section headings: start a paragraph with **Heading** on its own line.
+                      Supports basic formatting: use **bold text** and separate sections with a blank line. Section headings: start a paragraph with **Heading** on its own line. Paste a plain link (e.g. "Visit: https://grags.shop/product/xyz") to make it clickable — no special syntax needed.
                     </p>
                     <textarea
                       rows={14}
@@ -1662,12 +1669,12 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
                   {/* Cover Image */}
                   <div>
                     <label className={labelCls}>Cover Image</label>
-                    <p className="text-[10px] text-muted-foreground font-sans mb-1.5">Upload an image, or paste a direct image URL below.</p>
+                    <p className="text-[10px] text-muted-foreground font-sans mb-1.5">Upload an image, or paste a direct image URL or Google Drive share link below.</p>
                     <input type="file" accept="image/*" onChange={handleArticleImageUpload} className="text-sm font-sans text-muted-foreground" />
                     <input
                       value={articleForm.coverImage ?? ""}
-                      onChange={(e) => setArticleForm((f) => ({ ...f, coverImage: e.target.value }))}
-                      placeholder="https://example.com/image.jpg"
+                      onChange={(e) => setArticleForm((f) => ({ ...f, coverImage: resolveImageUrl(e.target.value) }))}
+                      placeholder="https://example.com/image.jpg or a Google Drive share link"
                       className={`${inputCls} mt-2`}
                     />
                     {articleForm.coverImage && (
@@ -1782,33 +1789,66 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
               </div>
               <div>
                 <label className={labelCls}>Contact Email</label>
-                <p className="text-xs text-muted-foreground font-sans mb-2">Shown on the Contact page and in the footer</p>
-                <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={inputCls} placeholder="support@grags.com" />
+                <p className="text-xs text-muted-foreground font-sans mb-2">Shown site-wide — Contact page, footer, header About panel, and Privacy Policy</p>
+                <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={inputCls} placeholder="support@grags.shop" />
               </div>
               <div>
                 <label className={labelCls}>Sender Email</label>
-                <p className="text-xs text-muted-foreground font-sans mb-2">The email address customers receive order status notifications from</p>
-                <input type="email" value={senderEmail} onChange={(e) => setSenderEmail(e.target.value)} className={inputCls} placeholder="orders@grags.com" />
+                <p className="text-xs text-muted-foreground font-sans mb-2">The email address customers receive order status notifications from. Must be a sender/domain already verified in Brevo, or sending will fail — leave blank to use the default (noreply@grags.shop).</p>
+                <input type="email" value={senderEmail} onChange={(e) => setSenderEmail(e.target.value)} className={inputCls} placeholder="noreply@grags.shop" />
               </div>
             </div>
 
-            {/* Store Location */}
+            {/* Store Locations */}
             <div className="space-y-4 border border-border p-5">
-              <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Store Location</p>
-              <div>
-                <label className={labelCls}>Store Address</label>
-                <p className="text-xs text-muted-foreground font-sans mb-2">Displayed in the footer and About section</p>
-                <input value={storeLocation} onChange={(e) => setStoreLocation(e.target.value)} className={inputCls} placeholder="e.g. 12 Liberty Market, Lahore, Pakistan" />
-              </div>
-              <div>
-                <label className={labelCls}>Google Maps URL</label>
-                <p className="text-xs text-muted-foreground font-sans mb-2">Paste the full Google Maps share link — clicking the address in the footer opens it in a new tab</p>
-                <input value={googleMapsUrl} onChange={(e) => setGoogleMapsUrl(e.target.value)} className={inputCls} placeholder="https://maps.google.com/..." />
-                {googleMapsUrl && (
-                  <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-xs text-muted-foreground underline hover:text-foreground transition-colors">
-                    Preview map link ↗
-                  </a>
-                )}
+              <p className="text-xs tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Store Locations</p>
+              <p className="text-xs text-muted-foreground font-sans -mt-2">Shown in the header's "Store Location" popup and the footer. Add one entry per physical store.</p>
+
+              {(settings.storeLocations ?? []).length > 0 && (
+                <div className="space-y-2">
+                  {(settings.storeLocations ?? []).map((loc) => (
+                    <div key={loc.id} className="flex items-start gap-3 p-3 border border-border bg-secondary/40">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-sans text-foreground font-medium">{loc.name}</p>
+                        <p className="text-xs text-muted-foreground font-sans">{loc.address}</p>
+                        {loc.googleMapsUrl && (
+                          <a href={loc.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-muted-foreground underline hover:text-foreground transition-colors">
+                            Preview map link ↗
+                          </a>
+                        )}
+                      </div>
+                      <button onClick={() => deleteStoreLocation(loc.id)} className="p-1 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="border border-dashed border-border p-4 space-y-3 bg-secondary/20">
+                <p className="text-[10px] tracking-ultra-wide uppercase text-muted-foreground font-sans font-semibold">Add Store Location</p>
+                <div>
+                  <label className={labelCls}>Location Name</label>
+                  <input value={locationForm.name} onChange={(e) => setLocationForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. Lahore Flagship" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Address</label>
+                  <input value={locationForm.address} onChange={(e) => setLocationForm((f) => ({ ...f, address: e.target.value }))} placeholder="e.g. 12 Liberty Market, Lahore, Pakistan" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Google Maps URL</label>
+                  <input value={locationForm.googleMapsUrl} onChange={(e) => setLocationForm((f) => ({ ...f, googleMapsUrl: e.target.value }))} placeholder="https://maps.google.com/..." className={inputCls} />
+                </div>
+                <button
+                  onClick={() => {
+                    if (!locationForm.name.trim() || !locationForm.address.trim()) return;
+                    addStoreLocation({ id: crypto.randomUUID(), ...locationForm });
+                    setLocationForm({ name: "", address: "", googleMapsUrl: "" });
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity"
+                >
+                  <Plus className="w-3 h-3" /> Add Location
+                </button>
               </div>
             </div>
 

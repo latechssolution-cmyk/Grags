@@ -19,9 +19,10 @@ function tagClass(tag: string) {
   return TAG_COLORS[tag] ?? "text-muted-foreground border-border bg-secondary";
 }
 
-// Render markdown-lite: **bold**, [text](url) inline links, newlines → paragraphs
+// Render markdown-lite: **bold**, [text](url) inline links, bare shoppable URLs
+// (e.g. "Visit: https://grags.shop/product/xyz"), newlines → paragraphs
 function renderInline(text: string, keyPrefix: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
+  const parts = text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\)|https?:\/\/[^\s)]+)/g);
   return parts.map((part, j) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
@@ -41,6 +42,19 @@ function renderInline(text: string, keyPrefix: string) {
           className="text-foreground underline underline-offset-2 hover:text-foreground/70 transition-colors"
         >
           {linkMatch[1]}
+        </a>
+      );
+    }
+    if (/^https?:\/\/[^\s)]+$/.test(part)) {
+      return (
+        <a
+          key={`${keyPrefix}-${j}`}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-foreground underline underline-offset-2 hover:text-foreground/70 transition-colors"
+        >
+          {part}
         </a>
       );
     }

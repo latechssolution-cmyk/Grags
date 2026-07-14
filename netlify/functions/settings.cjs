@@ -10,10 +10,11 @@ const headers = {
 const defaultSettings = {
   key: "site_settings",
   whatsappNumber: "923049172098",
-  contactEmail: "support@grags.com",
+  contactEmail: "support@grags.shop",
   senderEmail: "",
   storeLocation: "",
   googleMapsUrl: "",
+  storeLocations: [],
   trackOrderUrl: "https://www.tcs.com.pk/tracking",
   instagramUrl: "",
   facebookUrl: "",

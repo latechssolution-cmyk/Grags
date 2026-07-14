@@ -6,6 +6,7 @@ import { useJournal, getArticleUrl, resolveImageUrl } from "@/store/journalStore
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useSEO } from "@/hooks/useSEO";
 
 const TAG_COLORS: Record<string, string> = {
   Craft:    "text-amber-600   border-amber-500/30   bg-amber-500/8",
@@ -27,6 +28,11 @@ const JournalPage = () => {
   const published = articles.filter((a) => a.published);
   const allTags = Array.from(new Set(published.map((a) => a.tag)));
   const filtered = activeTag ? published.filter((a) => a.tag === activeTag) : published;
+
+  useSEO({
+    title: "Journal | Grags",
+    description: "Stories, craft notes, and style guidance from Grags — modern tailoring made in Pakistan.",
+  });
 
   return (
     <div className="min-h-screen bg-background">

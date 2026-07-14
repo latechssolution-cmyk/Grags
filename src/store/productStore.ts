@@ -337,6 +337,54 @@ export function useProducts() {
     return product.stock;
   }, []);
 
+  // sign = -1 reserves stock (order placed), sign = +1 releases it (order cancelled)
+  const adjustStock = useCallback((items: { id: string; size: string; color?: string; quantity: number }[], sign: 1 | -1) => {
+    const current = loadProducts();
+    const changed: Product[] = [];
+    const next = current.map((p) => {
+      const matches = items.filter((i) => i.id === p.id);
+      if (matches.length === 0) return p;
+
+      let stock = p.stock;
+      const variantStock = { ...(p.variantStock ?? {}) };
+      matches.forEach((m) => {
+        const change = sign * m.quantity;
+        stock = Math.max(0, stock + change);
+        if (m.color) {
+          const key = variantStockKey(m.color, m.size);
+          const base = key in variantStock ? variantStock[key] : p.stock;
+          variantStock[key] = Math.max(0, base + change);
+        }
+      });
+      const updated = { ...p, stock, variantStock };
+      changed.push(updated);
+      return updated;
+    });
+
+    if (changed.length === 0) return;
+    saveProducts(next);
+    setProducts(next);
+    notify();
+
+    changed.forEach((p) => {
+      fetch(`/.netlify/functions/products?id=${p.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock: p.stock, variantStock: p.variantStock }),
+      }).catch((err) => console.error("Error syncing stock to MongoDB:", err));
+    });
+  }, []);
+
+  const decrementStock = useCallback(
+    (items: { id: string; size: string; color?: string; quantity: number }[]) => adjustStock(items, -1),
+    [adjustStock]
+  );
+
+  const restoreStock = useCallback(
+    (items: { id: string; size: string; color?: string; quantity: number }[]) => adjustStock(items, 1),
+    [adjustStock]
+  );
+
   const addReview = useCallback((productId: string, review: ProductReview) => {
     const current = loadProducts();
     const next = current.map((p) =>
@@ -356,5 +404,5 @@ export function useProducts() {
     }).catch((err) => console.error("Error syncing review to MongoDB:", err));
   }, []);
 
-  return { products, addProduct, updateProduct, deleteProduct, getByTag, getByCollection, getById, getVariantStock, addReview };
+  return { products, addProduct, updateProduct, deleteProduct, getByTag, getByCollection, getById, getVariantStock, addReview, decrementStock, restoreStock };
 }

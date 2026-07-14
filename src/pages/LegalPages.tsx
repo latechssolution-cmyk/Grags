@@ -35,6 +35,7 @@ function P({ children }: { children: React.ReactNode }) {
 }
 
 export function PrivacyPage() {
+  const { settings } = useSettings();
   return (
     <PageLayout title="Privacy Policy">
       <P>Last updated: {new Date().toLocaleDateString("en-PK", { year: "numeric", month: "long", day: "numeric" })}</P>
@@ -49,7 +50,7 @@ export function PrivacyPage() {
       <H2>Your Rights</H2>
       <P>You have the right to access, update, or delete your personal information. To exercise these rights, please contact us at the details below.</P>
       <H2>Contact</H2>
-      <P>For privacy-related enquiries, email us at support@grags.com.</P>
+      <P>For privacy-related enquiries, email us at {settings.contactEmail || "support@grags.shop"}.</P>
     </PageLayout>
   );
 }
