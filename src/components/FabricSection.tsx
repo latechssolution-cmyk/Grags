@@ -51,7 +51,7 @@ const FabricSection = () => {
           ))}
         </motion.h2>
         <motion.a
-          href={fabric.buttonLink}
+          href={fabric.buttonLink || "/new-in"}
           className="mt-8 btn-trace px-8 py-3.5 text-xs tracking-ultra-wide uppercase font-sans text-white border border-white/50 hover:bg-white/10 transition-all duration-400"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

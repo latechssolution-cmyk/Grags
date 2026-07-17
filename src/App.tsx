@@ -24,6 +24,7 @@ import Men from "./pages/Men";
 import Women from "./pages/Women";
 import Kids from "./pages/Kids";
 import ScrollToTop from "./components/ScrollToTop";
+import NewsletterPopup from "./components/NewsletterPopup";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <ScrollToTop />
+        <NewsletterPopup />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/new-in" element={<NewIn />} />

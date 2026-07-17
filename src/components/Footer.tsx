@@ -39,9 +39,12 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-10">
           {/* Brand col */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="text-2xl font-roman font-bold tracking-ultra-wide text-foreground mb-4">
-              Grags
-            </h3>
+            <div className="flex items-center gap-2 mb-4">
+              <img src="/favicon.png" alt="" className="w-6 h-6 object-contain dark:invert" />
+              <h3 className="text-2xl font-roman font-bold tracking-ultra-wide text-foreground">
+                Grags
+              </h3>
+            </div>
             <p className="text-sm font-sans text-muted-foreground leading-relaxed max-w-xs">
               Premium tailored menswear crafted in Pakistan. Wear the unique.
             </p>

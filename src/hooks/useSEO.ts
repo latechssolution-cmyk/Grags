@@ -10,7 +10,7 @@ interface SEOOptions {
 const DEFAULT_TITLE = "Grags — Modern Tailoring, Pakistan | Premium Menswear";
 const DEFAULT_DESCRIPTION =
   "Premium tailored menswear crafted in Pakistan — shirts, outerwear, and considered essentials built to last. Grags. Modern tailoring, made to move.";
-const DEFAULT_IMAGE = "https://grags.shop/logo.png";
+const DEFAULT_IMAGE = "https://grags.shop/og-image.png";
 
 function upsertMeta(attr: "name" | "property", key: string, content: string) {
   let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;

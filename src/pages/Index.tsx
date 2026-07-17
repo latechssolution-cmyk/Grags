@@ -8,7 +8,6 @@ import ProductGrid from "@/components/ProductGrid";
 import CollectionsSection from "@/components/CollectionsSection";
 import FabricSection from "@/components/FabricSection";
 import ReviewsSection from "@/components/ReviewsSection";
-import NewsletterSection from "@/components/NewsletterSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 
@@ -35,7 +34,6 @@ const Index = () => {
             <CollectionsSection />
             <FabricSection />
             <ReviewsSection />
-            <NewsletterSection />
           </main>
           <Footer />
           <WhatsAppButton />

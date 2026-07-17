@@ -1294,7 +1294,11 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
             <div><label className={labelCls}>Heading (use \n for line break)</label><input value={heroForm.heading} onChange={(e) => setHeroForm((f) => ({ ...f, heading: e.target.value }))} className={inputCls} /></div>
             <div className="grid grid-cols-2 gap-4">
               <div><label className={labelCls}>Button Text</label><input value={heroForm.buttonText} onChange={(e) => setHeroForm((f) => ({ ...f, buttonText: e.target.value }))} className={inputCls} /></div>
-              <div><label className={labelCls}>Button Link</label><input value={heroForm.buttonLink} onChange={(e) => setHeroForm((f) => ({ ...f, buttonLink: e.target.value }))} className={inputCls} /></div>
+              <div>
+                <label className={labelCls}>Button Link</label>
+                <input value={heroForm.buttonLink} onChange={(e) => setHeroForm((f) => ({ ...f, buttonLink: e.target.value }))} placeholder="#products or /new-in" className={inputCls} />
+                <p className="text-[10px] text-muted-foreground font-sans mt-1">Use "#products" to scroll to the grid on this page, or a real path like "/new-in" — a bare word like "products" will break the link.</p>
+              </div>
             </div>
             <div>
               <label className="flex items-center gap-3 cursor-pointer" onClick={() => setHeroForm((f) => ({ ...f, useVideo: !f.useVideo }))}>
@@ -1328,7 +1332,11 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
             <div><label className={labelCls}>Heading (use \n for line break)</label><input value={fabricForm.heading} onChange={(e) => setFabricForm((f) => ({ ...f, heading: e.target.value }))} className={inputCls} /></div>
             <div className="grid grid-cols-2 gap-4">
               <div><label className={labelCls}>Button Text</label><input value={fabricForm.buttonText} onChange={(e) => setFabricForm((f) => ({ ...f, buttonText: e.target.value }))} className={inputCls} /></div>
-              <div><label className={labelCls}>Button Link</label><input value={fabricForm.buttonLink} onChange={(e) => setFabricForm((f) => ({ ...f, buttonLink: e.target.value }))} className={inputCls} /></div>
+              <div>
+                <label className={labelCls}>Button Link</label>
+                <input value={fabricForm.buttonLink} onChange={(e) => setFabricForm((f) => ({ ...f, buttonLink: e.target.value }))} placeholder="/new-in" className={inputCls} />
+                <p className="text-[10px] text-muted-foreground font-sans mt-1">A real path like "/new-in" or "/collections/your-slug" — a bare word like "products" will break the link.</p>
+              </div>
             </div>
             <div>
               <label className={labelCls}>Background Image</label>

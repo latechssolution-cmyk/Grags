@@ -57,7 +57,7 @@ const HeroSection = () => {
           ))}
         </motion.h2>
         <motion.a
-          href={hero.buttonLink}
+          href={hero.buttonLink || "#products"}
           className="btn-trace px-10 py-4 bg-white/10 backdrop-blur-sm text-white text-xs tracking-ultra-wide uppercase font-sans border border-white/40 hover:bg-white/20 transition-all duration-500"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
