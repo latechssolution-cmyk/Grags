@@ -28,37 +28,50 @@ const NewsletterPopup = () => {
   useEffect(() => {
     if (isAdmin || hasSeenRecently()) return;
 
-    let triggered = false;
+    let shown = false;
+    let scrollScheduled = false;
     let scrollTimeout: ReturnType<typeof setTimeout> | undefined;
 
+    // Single source of truth — safe to call from any trigger, only the first
+    // one to actually fire opens it.
     const show = () => {
-      if (triggered || hasSeenRecently()) return;
-      triggered = true;
+      if (shown || hasSeenRecently()) return;
+      shown = true;
       markSeen();
       setOpen(true);
     };
 
-    // Desktop: exit-intent — mouse leaves toward the browser's tab/address bar
-    const handleMouseOut = (e: MouseEvent) => {
-      if (!e.relatedTarget && e.clientY < 10) show();
+    // Desktop: exit-intent. `mouseleave` on document fires cleanly once when the
+    // cursor actually exits the viewport (toward the tab/address bar), unlike the
+    // older `mouseout` + relatedTarget-checking approach, which is noisier and
+    // less consistent across browsers.
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 0) show();
     };
 
-    // Mobile fallback: scrolled past ~50% of the page, then a short delay
+    // Mobile: scrolled past ~50% of the page, then a short delay.
     const handleScroll = () => {
-      if (triggered) return;
+      if (scrollScheduled || shown) return;
       const scrolled = (window.scrollY + window.innerHeight) / document.body.scrollHeight;
       if (scrolled > 0.5) {
-        triggered = true;
+        scrollScheduled = true;
         scrollTimeout = setTimeout(show, 1500);
       }
     };
 
-    document.addEventListener("mouseout", handleMouseOut);
+    // Safety net: exit-intent is an inherently unreliable signal (depends on
+    // exact cursor behavior, varies by browser) and plenty of visitors never
+    // scroll past 50%. If neither trigger has fired after 25s of active
+    // browsing, show it anyway rather than silently never capturing that visitor.
+    const fallbackTimer = setTimeout(show, 25000);
+
+    document.addEventListener("mouseleave", handleMouseLeave);
     window.addEventListener("scroll", handleScroll);
 
     return () => {
-      document.removeEventListener("mouseout", handleMouseOut);
+      document.removeEventListener("mouseleave", handleMouseLeave);
       window.removeEventListener("scroll", handleScroll);
+      clearTimeout(fallbackTimer);
       if (scrollTimeout) clearTimeout(scrollTimeout);
     };
   }, [isAdmin]);
