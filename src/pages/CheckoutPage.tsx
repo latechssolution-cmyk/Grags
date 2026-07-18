@@ -58,7 +58,7 @@ function Field({
 
 export default function CheckoutPage() {
   const { items, subtotal, clear } = useCart();
-  const { addOrder } = useOrders();
+  const { orders, addOrder } = useOrders();
   const { settings, applyCoupon } = useSettings();
 
   const [form, setForm] = useState<FormData>({
@@ -121,7 +121,7 @@ export default function CheckoutPage() {
   const receiptRequired = isBankTransfer && !receiptImage;
 
   const handleApplyCoupon = () => {
-    const result = applyCoupon(couponInput.trim(), subtotal, items);
+    const result = applyCoupon(couponInput.trim(), subtotal, { email: form.email, phone: form.phone }, orders);
     setCouponResult(result);
   };
 

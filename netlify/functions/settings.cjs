@@ -22,6 +22,7 @@ const defaultSettings = {
   couponCodes: [
     { id: "1", code: "GRAGS10", discount: 10, type: "percentage", active: true },
     { id: "2", code: "WELCOME500", discount: 500, type: "fixed", active: true },
+    { id: "3", code: "WELCOME10", discount: 10, type: "percentage", active: true, oncePerCustomer: true },
   ],
   collections: [
     { id: "1", name: "MENS POLO", title: "Men's Polos", subtitle: "Classic Collection", slug: "mens-polo" },

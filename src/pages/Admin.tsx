@@ -872,7 +872,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [heroForm, setHeroForm] = useState(hero);
   const [fabricForm, setFabricForm] = useState(fabric);
-  const [couponForm, setCouponForm] = useState({ code: "", discount: 0, type: "percentage" as "percentage" | "fixed" });
+  const [couponForm, setCouponForm] = useState({ code: "", discount: 0, type: "percentage" as "percentage" | "fixed", oncePerCustomer: false });
   const [locationForm, setLocationForm] = useState({ name: "", address: "", googleMapsUrl: "" });
   const [whatsappNum, setWhatsappNum] = useState(settings.whatsappNumber);
   const [contactEmail, setContactEmail] = useState(settings.contactEmail ?? "");
@@ -1566,7 +1566,13 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
                   </select>
                 </div>
               </div>
-              <button onClick={() => { if (!couponForm.code || !couponForm.discount) return; addCoupon({ id: crypto.randomUUID(), ...couponForm, active: true }); setCouponForm({ code: "", discount: 0, type: "percentage" }); }}
+              <label className="flex items-center gap-3 cursor-pointer" onClick={() => setCouponForm(f => ({ ...f, oncePerCustomer: !f.oncePerCustomer }))}>
+                <div className={`w-4 h-4 border flex-shrink-0 ${couponForm.oncePerCustomer ? "bg-foreground border-foreground" : "border-border"} flex items-center justify-center`}>
+                  {couponForm.oncePerCustomer && <div className="w-2 h-2 bg-background" />}
+                </div>
+                <span className="text-sm font-sans text-foreground">Limit to one use per customer (matched by email or phone)</span>
+              </label>
+              <button onClick={() => { if (!couponForm.code || !couponForm.discount) return; addCoupon({ id: crypto.randomUUID(), ...couponForm, active: true }); setCouponForm({ code: "", discount: 0, type: "percentage", oncePerCustomer: false }); }}
                 className="flex items-center gap-2 px-5 py-2 bg-foreground text-background text-xs tracking-ultra-wide uppercase font-sans hover:opacity-90 transition-opacity">
                 <Plus className="w-3 h-3" /> Add Coupon
               </button>
@@ -1578,6 +1584,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
                     <span className="text-sm font-sans font-medium text-foreground tracking-wide">{c.code}</span>
                     <span className="text-xs text-muted-foreground font-sans">{c.type === "percentage" ? `${c.discount}% off` : `PKR ${c.discount} off`}</span>
                     <span className={`text-[9px] px-2 py-0.5 tracking-ultra-wide uppercase font-sans ${c.active ? "bg-accent text-accent-foreground" : "bg-destructive/20 text-destructive"}`}>{c.active ? "Active" : "Inactive"}</span>
+                    {c.oncePerCustomer && <span className="text-[9px] px-2 py-0.5 tracking-ultra-wide uppercase font-sans bg-secondary text-muted-foreground">One per customer</span>}
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => toggleCoupon(c.id)} className="px-3 py-1 text-xs border border-border text-foreground font-sans hover:bg-secondary transition-colors">{c.active ? "Disable" : "Enable"}</button>

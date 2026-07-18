@@ -6,6 +6,9 @@ export interface CouponCode {
   discount: number;
   type: "percentage" | "fixed";
   active: boolean;
+  // When true, a customer (matched by email or phone against past non-cancelled
+  // orders) can only redeem this code once — for welcome/first-order codes.
+  oncePerCustomer?: boolean;
 }
 
 export interface Section {
@@ -64,6 +67,7 @@ const defaultSettings: SiteSettings = {
   couponCodes: [
     { id: "1", code: "GRAGS10", discount: 10, type: "percentage", active: true },
     { id: "2", code: "WELCOME500", discount: 500, type: "fixed", active: true },
+    { id: "3", code: "WELCOME10", discount: 10, type: "percentage", active: true, oncePerCustomer: true },
   ],
   collections: [
     { id: "1", name: "MENS POLO", title: "Men's Polos", subtitle: "Classic Collection", slug: "mens-polo" },
@@ -165,11 +169,31 @@ export function useSettings() {
     saveAndSync(next);
   }, [saveAndSync]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const applyCoupon = useCallback((code: string, subtotal: number, _lines?: unknown): { valid: boolean; discount: number; message: string } => {
+  const applyCoupon = useCallback((
+    code: string,
+    subtotal: number,
+    customer: { email?: string; phone?: string },
+    pastOrders: { email: string; phone: string; couponCode: string; status: string }[]
+  ): { valid: boolean; discount: number; message: string } => {
     const current = load();
     const coupon = current.couponCodes.find(c => c.code.toUpperCase() === code.toUpperCase() && c.active);
     if (!coupon) return { valid: false, discount: 0, message: "Invalid or expired coupon code" };
+
+    if (coupon.oncePerCustomer) {
+      const email = customer.email?.trim().toLowerCase();
+      const phone = customer.phone?.trim();
+      const alreadyUsed = pastOrders.some((o) => {
+        if (o.status === "Cancelled") return false;
+        if (o.couponCode?.toUpperCase() !== coupon.code.toUpperCase()) return false;
+        const emailMatch = !!email && o.email?.trim().toLowerCase() === email;
+        const phoneMatch = !!phone && o.phone?.trim() === phone;
+        return emailMatch || phoneMatch;
+      });
+      if (alreadyUsed) {
+        return { valid: false, discount: 0, message: "This code has already been used — it's a one-time welcome discount." };
+      }
+    }
+
     const discount = coupon.type === "percentage" ? Math.round(subtotal * coupon.discount / 100) : Math.min(coupon.discount, subtotal);
     return { valid: true, discount, message: `${coupon.type === "percentage" ? `${coupon.discount}%` : `PKR ${coupon.discount}`} discount applied!` };
   }, []);
