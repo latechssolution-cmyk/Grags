@@ -16,10 +16,12 @@ const HeroSection = () => {
         {hero.useVideo && hero.videoUrl ? (
           <video
             src={hero.videoUrl}
+            poster={hero.image || defaultImage}
             autoPlay
             muted
             loop
             playsInline
+            preload="metadata"
             className="w-full h-full object-cover object-center"
           />
         ) : (
