@@ -47,7 +47,7 @@ const StatCard = ({
   </div>
 );
 
-// ─── Send Status Email via Brevo (netlify/functions/send-email.cjs) ──
+// ─── Send Status Email via Resend (netlify/functions/send-email.cjs) ──
 const sendStatusEmail = async (status: OrderStatus, order: any, fromEmail?: string): Promise<boolean> => {
   const subjects: Record<OrderStatus, string> = {
     Pending:   `Your GRAGS Order #${order.id} is Pending`,
@@ -1865,7 +1865,7 @@ const AdminPanel = ({ onLogout }: { onLogout: () => void }) => {
               </div>
               <div>
                 <label className={labelCls}>Sender Email</label>
-                <p className="text-xs text-muted-foreground font-sans mb-2">The email address customers receive order status notifications from. Must be a sender/domain already verified in Brevo, or sending will fail — leave blank to use the default (noreply@grags.shop).</p>
+                <p className="text-xs text-muted-foreground font-sans mb-2">The email address customers receive order status notifications from. Must be a sender/domain already verified in Resend, or sending will fail — leave blank to use the default (noreply@grags.shop).</p>
                 <input type="email" value={senderEmail} onChange={(e) => setSenderEmail(e.target.value)} className={inputCls} placeholder="noreply@grags.shop" />
               </div>
             </div>

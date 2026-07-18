@@ -1,4 +1,4 @@
-const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+const RESEND_API_URL = "https://api.resend.com/emails";
 const SENDER_EMAIL = "noreply@grags.shop";
 
 const headers = {
@@ -16,38 +16,38 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers, body: "Method Not Allowed" };
   }
 
-  const BREVO_API_KEY = process.env.BREVO_API_KEY;
-  if (!BREVO_API_KEY) {
-    console.error("BREVO_API_KEY environment variable is not set");
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) {
+    console.error("RESEND_API_KEY environment variable is not set");
     return { statusCode: 500, headers, body: JSON.stringify({ error: "Email service not configured" }) };
   }
 
   try {
     const { to, subject, html, from } = JSON.parse(event.body);
 
-    const res = await fetch(BREVO_API_URL, {
+    const res = await fetch(RESEND_API_URL, {
       method: "POST",
       headers: {
         accept: "application/json",
         "content-type": "application/json",
-        "api-key": BREVO_API_KEY,
+        authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        sender: { name: "Grags", email: from || SENDER_EMAIL },
-        to: [{ email: to }],
+        from: `Grags <${from || SENDER_EMAIL}>`,
+        to: [to],
         subject,
-        htmlContent: html,
+        html,
       }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      console.error("Brevo error:", data);
+      console.error("Resend error:", data);
       return { statusCode: res.status, headers, body: JSON.stringify({ error: data }) };
     }
 
-    return { statusCode: 200, headers, body: JSON.stringify({ success: true, id: data.messageId }) };
+    return { statusCode: 200, headers, body: JSON.stringify({ success: true, id: data.id }) };
   } catch (err) {
     console.error("send-email error:", err);
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
