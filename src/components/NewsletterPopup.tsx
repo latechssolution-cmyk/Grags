@@ -7,7 +7,7 @@ import { useLocation } from "react-router-dom";
 const STORAGE_KEY = "grags_newsletter_dismissed";
 const EXPIRY_DAYS = 30;
 const BREVO_FORM_URL =
-  "https://8637a099.sibforms.com/v2/serve/MUIFAF08VO4Uu6gQUpA3jFzXWG8SrwAC8Ky8HEeszz_QrEInboIboCnJ6S6FeeZh9XnhXGBmcyR_AIJqEA7hCY7zbtYKqvOtnYISYSzS8fB15ISexsG2QGL1zvek_HeXr4ybEuU1EPLIYd_hWS3HFHIOuCyTAn0Ses3pe5AEGN5jC3CXqPYrfe2TS0at1efDQXbMRxsPI4Mz_P-DgA==";
+  "https://8637a099.sibforms.com/serve/MUIFAF08VO4Uu6gQUpA3jFzXWG8SrwAC8Ky8HEeszz_QrElnboIboCnJ6S6FeeZh9XnhXGBmcyR_AlJqEA7hCY7zbtYKqvOtnYISYSzS8fB15ISexsG2QGL1zvek_HeXr4ybEuU1EPLlYd_hWS3HFHIOuCyTAn0Ses3pe5AEGN5jC3CXqPYrfe2TS0at1efDQXbMRxsPl4Mz_P-DgA==";
 
 function hasSeenRecently(): boolean {
   const stored = localStorage.getItem(STORAGE_KEY);
